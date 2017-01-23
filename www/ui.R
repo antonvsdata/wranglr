@@ -1,0 +1,101 @@
+shinyUI(
+  
+navbarPage("Wranglr",
+  
+  tabPanel("Sample",
+           includeCSS("style.css"),
+           # Uncomment if you like pink
+           # includeCSS("alternative_style.css"),
+           
+           h4("Validate sample information file:"),
+           br(),
+           fileInput("sample_input","Input sample info file"),
+           htmlOutput("format_check"),
+           fluidRow(
+             column(5,
+                    htmlOutput("sample_warnings"),
+                    htmlOutput("group_time"),
+                    htmlOutput("summarize_data")),
+             column(5,
+                    htmlOutput("meta_warnings"),
+                    textOutput("variables"))
+           ),
+           br(),
+           h4("Randomize and add QC"),
+           textInput("project_title","Project title:"),
+           uiOutput("destination"),
+           selectInput("random","Sample run order",
+                       choices = c("Original" = FALSE,"Random" = TRUE), selected = TRUE),
+           radioButtons("sample_position_type","Sample positioning type",
+                        choices = c("96-well plate" = "well","54-vial plate" = "vial")),
+           selectInput("qc_int", "Number of samples before every QC:",
+                       choices = c("No QC samples" = NA,5,10,12,15), selected = 12),
+           checkboxGroupInput("modes","Modes",
+                              choices = c("HILIC neg" = "HILIC_neg","HILIC pos" = "HILIC_pos","RP neg" = "RP_neg","RP pos" = "RP_pos"),
+                              selected = c("HILIC_neg","HILIC_pos","RP_neg","RP_pos"),
+                              inline = TRUE),
+           br(),
+           strong("Number of QC before beginning of mode:"),
+           br(),br(),
+           fluidRow(
+             conditionalPanel(condition = "input.modes.includes('HILIC_neg')",
+                              column(3,
+                                     numericInput("qc_begin_hilicneg","HILIC neg",
+                                                 value = 10, min = 0, step = 1))),
+             conditionalPanel(condition = "input.modes.includes('HILIC_pos')",
+                              column(3,
+                                     numericInput("qc_begin_hilicpos","HILIC pos",
+                                                  value = 10, min = 0, step = 1))),
+             conditionalPanel(condition = "input.modes.includes('RP_neg')",
+                              column(3,
+                                     numericInput("qc_begin_rpneg","RP neg",
+                                                  value = 10, min = 0, step = 1))),
+             conditionalPanel(condition = "input.modes.includes('RP_pos')",
+                              column(3,
+                                     numericInput("qc_begin_rppos","RP pos",
+                                                  value = 10, min = 0, step = 1)))
+           ),
+           br(),
+           strong("QC sample position of mode:"),
+           br(),br(),
+           uiOutput("qc_poschars"),
+           uiOutput("second_column"),
+           actionButton("modify_sample","Submit & Process"),
+           br(),
+           br(),
+           uiOutput("sample_mod_info"),
+           br(),
+           br()),
+  
+  tabPanel("MPP",
+           h4("Combine MPP output files"),
+           br(),
+           uiOutput("project_title_mirror"),
+           fileInput("sample_input_mpp","Input processed sample info sheet"),
+          
+           htmlOutput("sample_processed_warnings"),
+           br(),
+           fluidRow(
+             column(5,
+                    fileInput("hilic_neg", "Input HILIC NEG file")),
+             
+             column(5,
+                    fileInput("hilic_pos", "Input HILIC POS file"))
+           ),
+           fluidRow(
+             column(5,
+                    fileInput("rp_neg", "Input RP NEG file")),
+             
+             column(5,
+                    fileInput("rp_pos", "Input RP POS file"))
+           ),
+           actionButton("combine_mpp","Submit & Process"),
+           #conditionalPanel(condition="$('html').hasClass('shiny-busy')",tags$div("Loading...",id="loadmessage")),
+           br(),
+           br(),
+           uiOutput("mpp_combine_msg"),
+           uiOutput("mpp_preview"),
+           uiOutput("mpp_download"),
+           br(),
+           br())
+))

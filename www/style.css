@@ -1,0 +1,32 @@
+#summarize_data{
+  min-height: 150px;
+}
+
+#group_time{
+  margin-top: 15px;
+  min-height: 20px;
+}
+
+#validation_msg{
+  min-height: 20px;
+}
+
+#valid_processed{
+  min-height: 60px;
+}
+
+#loadmessage{
+position: fixed;
+top: 60%;
+left: 50%;
+opacity: 0.50; 
+text-align: center;
+font-weight: bold;
+font-size: 300%;
+color: #000000;
+z-index: 105;
+}
+
+.col-sm-3{
+  max-width: 150px;
+}
