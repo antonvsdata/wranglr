@@ -218,7 +218,7 @@ shinyServer(function(input,output){
     if (!is.null(sample_warnings()) & sample_warnings() != ""){
       return(NULL)
     }
-    modify_sample(sample_dframe(),input$project_title, input$folder, as.numeric(input$qc_int),input$modes, qc_begins(),
+    modify_sample(sample_dframe(),input$project_title, input$save, input$folder, as.numeric(input$qc_int),input$modes, qc_begins(),
                   input$random, input$sample_position_type,qc_pos_chars(), input$second_column_choice)
   })
   

@@ -176,14 +176,14 @@ generate_sample_positions <- function(n,position_type,qc_pos_char){
   positions
 }
 
-generate_internal_sample_ids <- function(n, project_title){
-  history <- read.csv("project_codes.csv")
-  if(project_title %in% history$Project){
-    index <- which(history$Project == project_title)
-    project_code <- history$Code[index]
+generate_internal_sample_ids <- function(n, project_title,save_code){
+  saved_codes <- read.csv("project_codes.csv")
+  if(project_title %in% saved_codes$Project){
+    index <- which(saved_codes$Project == project_title)
+    project_code <- saved_codes$Code[index]
   }
   else{
-    num <- nrow(history) + 1
+    num <- nrow(saved_codes) + 1
     if(num <= 26){
       project_code <- (num + 64) %>% as.raw() %>% rawToChar()
     }
@@ -193,8 +193,10 @@ generate_internal_sample_ids <- function(n, project_title){
       project_code <- paste0(first,last)
     }
     newrow <- data.frame(Project = project_title, Code = project_code)
-    history <- rbind(history,newrow)
-    write.csv(history,"project_codes.csv",row.names = F, quote = F, eol = "\r\n")
+    write.table(newrow,"project_log.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
+    if(save_code){
+      write.table(newrow,"project_codes.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F, eol = "\r\n")
+    }
   }
   int_id <- rep(NA,n)
   j <- 0
@@ -205,7 +207,8 @@ generate_internal_sample_ids <- function(n, project_title){
 }
 
 # Randomizes the samples, adds QC and generates internal ID
-modify_sample <- function(dframe,project_title,folder,qc_int,modes,qc_begins,random,position_type,qc_pos_chars,second_column){
+modify_sample <- function(dframe, project_title, save_code, folder, qc_int, modes,
+                          qc_begins, random, position_type, qc_pos_chars, second_column){
   
   # Randomize row order
   n <- nrow(dframe)
@@ -218,7 +221,7 @@ modify_sample <- function(dframe,project_title,folder,qc_int,modes,qc_begins,ran
   }
   # Generate internal ID for non-QC samples
   
-  dframe_ord$INTERNAL_SAMPLE_ID <- generate_internal_sample_ids(n,project_title)
+  dframe_ord$INTERNAL_SAMPLE_ID <- generate_internal_sample_ids(n,project_title, save_code)
   
   classes <- lapply(dframe_ord, class) %>% unlist() %>% unname()
   for (i in 1:length(classes)){
