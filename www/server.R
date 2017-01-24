@@ -284,18 +284,18 @@ shinyServer(function(input,output){
     tagList(
       fluidRow(
         conditionalPanel(condition = "input.modes.includes('HILIC_neg')",
-                         column(3,
+                         column(4,
                                downloadButton("worklist_hilic_neg_download","HILIC neg file"))),
         conditionalPanel(condition = "input.modes.includes('HILIC_pos')",
-                         column(3,
+                         column(4,offset = 1,
                                 downloadButton("worklist_hilic_pos_download","HILIC pos file")))),
       br(),
       fluidRow(
         conditionalPanel(condition = "input.modes.includes('RP_neg')",
-                         column(3,
+                         column(4,
                                 downloadButton("worklist_rp_neg_download","RP neg file"))),
         conditionalPanel(condition = "input.modes.includes('RP_pos')",
-                         column(3,
+                         column(4,offset = 1,
                                 downloadButton("worklist_rp_pos_download","RP pos file")))
       )
     )
