@@ -199,7 +199,6 @@ generate_internal_sample_ids <- function(n, project_title,save_code){
     }
   }
   int_id <- rep(NA,n)
-  j <- 0
   for(i in 1:n){
     int_id[i] <- paste(project_code,as.character(i),sep="_")
   }

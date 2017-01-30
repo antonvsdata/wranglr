@@ -2,7 +2,7 @@ shinyUI(
   
 navbarPage("Wranglr",
   
-  tabPanel("Sample",
+  tabPanel("Sample information file",
            includeCSS("style.css"),
            # Uncomment if you like pink
            # includeCSS("alternative_style.css"),
@@ -68,7 +68,7 @@ navbarPage("Wranglr",
            br(),
            br()),
   
-  tabPanel("MPP",
+  tabPanel("MPP files",
            h4("Combine MPP output files"),
            br(),
            uiOutput("project_title_mirror"),
