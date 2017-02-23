@@ -513,4 +513,12 @@ shinyServer(function(input,output){
       file.copy("Wranglr_instructions.pdf",file)
     }
   )
+  
+  output$sample_specs <- downloadHandler(
+    filename = "sample_form_specification.pdf",
+    
+    content = function(file){
+      file.copy("sample_form_specification.pdf",file)
+    }
+  )
 })

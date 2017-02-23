@@ -100,5 +100,8 @@ navbarPage("Wranglr",
            br(),
            br()),
   tabPanel("Instructions",
-           downloadButton("instructions"))
+           h4("Download Wranglr instructions"),
+           downloadButton("instructions"),
+           h4("Download sample information sheet specifications"),
+           downloadButton("sample_specs"))
 ))
