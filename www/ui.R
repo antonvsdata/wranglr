@@ -98,5 +98,7 @@ navbarPage("Wranglr",
            uiOutput("mpp_preview"),
            uiOutput("mpp_download"),
            br(),
-           br())
+           br()),
+  tabPanel("Instructions",
+           downloadButton("instructions"))
 ))

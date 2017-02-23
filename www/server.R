@@ -505,4 +505,12 @@ shinyServer(function(input,output){
       write.csv(mpp_combine_list()$data_matrix,file, na = "", row.names = FALSE, eol = "\r\n")
     }
   )
+  
+  output$instructions <- downloadHandler(
+    filename = "Wranglr_instructions.pdf",
+    
+    content = function(file){
+      file.copy("Wranglr_instructions.pdf",file)
+    }
+  )
 })
