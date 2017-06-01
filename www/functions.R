@@ -125,7 +125,7 @@ get_qc_position <- function(qc_char,position_type){
   return(list(x=x,y=y,z=z))
 }
 
-generate_sample_positions <- function(n,position_type,qc_pos_char){
+generate_sample_positions <- function(n,position_type,qc_pos_char,qc_int){
   positions <- rep(NA,n)
   qc <- get_qc_position(qc_pos_char,position_type)
   
@@ -137,16 +137,21 @@ generate_sample_positions <- function(n,position_type,qc_pos_char){
       x <- x +1
     }
     for(i in 1:n){
-      positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
-      x <- x + 1
-      if(x == 13 | (x == qc$x & y == qc$y & z == qc$z)){ # position P2-H12 is reserved for QC sample
-        x <- 1
-        y <- y + 1
-        if(y == 9){
-          y <- 1
-          z <- z + 1
-          if(z == 3){
-            z <- 1
+      if (i %% (qc_int+1) == 0){
+        positions[i] <- qc_pos_char
+      }
+      else{
+        positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
+        x <- x + 1
+        if(x == 13 | (x == qc$x & y == qc$y & z == qc$z)){ # position P2-H12 is reserved for QC sample
+          x <- 1
+          y <- y + 1
+          if(y == 9){
+            y <- 1
+            z <- z + 1
+            if(z == 3){
+              z <- 1
+            }
           }
         }
       }
@@ -157,16 +162,21 @@ generate_sample_positions <- function(n,position_type,qc_pos_char){
     y <- 1
     z <- 1
     for(i in 1:n){
-      positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
-      x <- x + 1
-      if(x == 10 | (x == qc$x & y == qc$y & z == qc$z)){# position P2-F9 is reserved for QC sample
-        x <- 1
-        y <- y + 1
-        if(y == 7){
-          y <- 1
-          z <- z + 1
-          if(z == 3){
-            z <- 1
+      if (i %% (qc_int+1) == 0){
+        positions[i] <- qc_pos_char
+      }
+      else{
+        positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
+        x <- x + 1
+        if(x == 10 | (x == qc$x & y == qc$y & z == qc$z)){# position P2-F9 is reserved for QC sample
+          x <- 1
+          y <- y + 1
+          if(y == 7){
+            y <- 1
+            z <- z + 1
+            if(z == 3){
+              z <- 1
+            }
           }
         }
       }
@@ -237,7 +247,7 @@ modify_sample <- function(dframe, project_title, save_code, folder, qc_int, mode
     j <- 0
     QC <- rep(NA,n_mod)
     
-    #Add QC rows in the middle and create QC column
+    # Add QC rows in the middle and create QC column
     for (i in 1:n_mod){
       if (i %% (qc_int+1) == 0){
         dframe_mod[i,] <- rep(NA,times = ncol(dframe_ord))
@@ -260,7 +270,7 @@ modify_sample <- function(dframe, project_title, save_code, folder, qc_int, mode
   # Add QC rows to beginning and combine
   for(i in 1:length(modes)){
     dframe_tmp <- dframe_mod
-    dframe_tmp$SAMPLE_POSITION <- generate_sample_positions(nrow(dframe_tmp),position_type,qc_pos_chars[[i]])
+    dframe_tmp$SAMPLE_POSITION <- generate_sample_positions(nrow(dframe_tmp),position_type,qc_pos_chars[[i]],qc_int)
     QC_tmp <- c(rep(TRUE,qc_begins[[i]]),QC)
     dummyframe <- matrix(NA,qc_begins[[i]],ncol(dframe_tmp)) %>% data.frame()
     colnames(dummyframe) <- colnames(dframe_tmp)
