@@ -170,10 +170,20 @@ shinyServer(function(input,output){
     return("QC")
   })
   
+  output$msms_samples <- renderUI({
+    selectizeInput("msms_samples_choice","Choose samples for AutoMSMS",
+                   choices = sample_dframe()$SAMPLE_ID, multiple = TRUE)
+  })
+  
   output$second_column <- renderUI({
     selectInput("second_column_choice","Second column for MPP",
                 choices = c(colnames(sample_dframe()),"QC"),
                 selected = default_column())
+  })
+  
+  output$grouping_column <- renderUI({
+    selectInput("grouping_column_choice","Column containing groups for randomization",
+                choices = colnames(sample_dframe()))
   })
   
   qc_begins <- reactive({
@@ -219,7 +229,7 @@ shinyServer(function(input,output){
       return(NULL)
     }
     modify_sample(sample_dframe(),input$project_title, input$save, input$folder, as.numeric(input$qc_int),input$modes, qc_begins(),
-                  input$random, input$sample_position_type,qc_pos_chars(), input$second_column_choice)
+                  input$sample_order, input$grouping_column_choice, input$sample_position_type, qc_pos_chars(), input$second_column_choice)
   })
   
   sample_modified_info <-eventReactive(input$modify_sample,{
@@ -305,7 +315,13 @@ shinyServer(function(input,output){
     if(is.null(sample_modified())){
       return(NULL)
     }
-    separate_worklists(sample_modified()$worklist,input$modes)
+    samples <- sample_modified()$MPP
+    print(input$msms_samples_choice)
+    indx <- which(as.character(samples$SAMPLE_ID) %in% input$msms_samples_choice)
+    print(indx)
+    msms_sample_ids <- samples$INTERNAL_SAMPLE_ID[indx] %>% unique()
+    print(msms_sample_ids)
+    separate_worklists(sample_modified()$worklist,input$modes, input$msms_qc, msms_sample_ids)
   })
   
   output$worklist_hilic_neg_download <- downloadHandler(

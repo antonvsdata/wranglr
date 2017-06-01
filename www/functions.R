@@ -73,7 +73,7 @@ generate_datafile_labels <- function(folder,project_title,modes,qc_begins,n_mod)
   longs <- c()
   
   if("HILIC_neg" %in% modes){
-    hilic_neg_labels <- str_pad(as.character(1:(n_mod+qc_begins$hilicneg)),width=4, pad = "0") %>%paste(project_title,"HILIC_neg",.,sep = "_")
+    hilic_neg_labels <- str_pad(as.character(1:(n_mod+qc_begins$hilicneg)),width=4, pad = "0") %>% paste(project_title,"HILIC_neg",.,sep = "_")
     labels <- c(labels,hilic_neg_labels)
     hilic_neg_long <- paste(folder,project_title,"_HILIC_neg\\", hilic_neg_labels,".d",sep="")
     longs <- c(longs,hilic_neg_long)
@@ -99,6 +99,16 @@ generate_datafile_labels <- function(folder,project_title,modes,qc_begins,n_mod)
   list(short = labels,long = longs)
 }
 
+# Get the position of the QC samples in XYZ-coordinates
+
+# INPUT:
+#     qc_char: character giving the position of the QC samples, e.g. "P2-H12"
+#     position_type: the type of plate to use, "vial" for 54-vial plate or "well" for 96-well plate
+#OUTPUT:
+# list of xyz-coordinates
+# x, y = position on plate
+# z = plate number (1 or 2)
+# These coordinates are used by generate_sample_positions
 get_qc_position <- function(qc_char,position_type){
   qc_char <- strsplit(qc_char,split = NULL) %>% unlist()
   len <- length(qc_char)
@@ -125,74 +135,81 @@ get_qc_position <- function(qc_char,position_type){
   return(list(x=x,y=y,z=z))
 }
 
+# Generate sample positions for all the samples after initial QCs
+# INPUT:
+#     n: number of samples
+#     position_type: the type of plate to use, "vial" for 54-vial plate or "well" for 96-well plate
+#     qc_pos_char: character giving the position of the QC samples, e.g. "P2-H12"
+#     qc_int: interval of the QC samples = number of samples between QC samples
+# OUTPUT:
+#     character vector of positions for worklist file
 generate_sample_positions <- function(n,position_type,qc_pos_char,qc_int){
   positions <- rep(NA,n)
   qc <- get_qc_position(qc_pos_char,position_type)
   
-  if(position_type == "well"){ # 96-well plate
-    x <- 1
-    y <- 1
-    z <- 1
-    if(x == qc$x & y == qc$y & z == qc$z){
-      x <- x +1
-    }
-    for(i in 1:n){
-      if (i %% (qc_int+1) == 0){
-        positions[i] <- qc_pos_char
-      }
-      else{
-        positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
-        x <- x + 1
-        if(x == 13 | (x == qc$x & y == qc$y & z == qc$z)){ # position P2-H12 is reserved for QC sample
-          x <- 1
-          y <- y + 1
-          if(y == 9){
-            y <- 1
-            z <- z + 1
-            if(z == 3){
-              z <- 1
-            }
-          }
-        }
-      }
-    }
+  # Set the size of the plate
+  if(position_type == "well"){
+    x_cut <- 13
+    y_cut <- 9
   }
-  else{# position type == vial  54-vial plate
-    x <- 1
-    y <- 1
-    z <- 1
-    for(i in 1:n){
-      if (i %% (qc_int+1) == 0){
-        positions[i] <- qc_pos_char
-      }
-      else{
-        positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
-        x <- x + 1
-        if(x == 10 | (x == qc$x & y == qc$y & z == qc$z)){# position P2-F9 is reserved for QC sample
-          x <- 1
-          y <- y + 1
-          if(y == 7){
-            y <- 1
-            z <- z + 1
-            if(z == 3){
-              z <- 1
-            }
-          }
-        }
-      }
-    }
+  else if(position_type == "vial"){
+    x_cut <- 10
+    y_cut <- 7
   }
   
+  x <- 1
+  y <- 1
+  z <- 1
+  
+  if(x == qc$x & y == qc$y & z == qc$z){
+    x <- x +1
+  }
+  
+  for(i in 1:n){
+    if (i %% (qc_int+1) == 0){
+      positions[i] <- qc_pos_char
+    }
+    else{
+      positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
+      x <- x + 1
+      if (x == qc$x & y == qc$y & z == qc$z){ # skip the position reserved for QC sample
+        x <- x + 1
+      }
+      if(x == x_cut){
+        x <- 1
+        y <- y + 1
+        if(y == y_cut){
+          y <- 1
+          z <- z + 1
+          if(z == 3){
+            z <- 1
+          }
+        }
+      }
+    }
+  }
   positions
 }
 
+# Generate internal sample IDs
+# The form is A_1, A_2, ...
+# The letter (code) can be saved and reused for the same project
+# The next project will have the next code: B, C, ... , AA, ... , AZ, ...
+
+# INPUT:
+#     n: number of samples
+#     project_title: character
+#     save_code: Boolean indicating if the code should be saved
+# OUTPUT:
+#     character vector of internal IDs
 generate_internal_sample_ids <- function(n, project_title,save_code){
   saved_codes <- read.csv("project_codes.csv")
-  if(project_title %in% saved_codes$Project){
+  
+  if(project_title %in% saved_codes$Project){ # Use existing code
     index <- which(saved_codes$Project == project_title)
     project_code <- saved_codes$Code[index]
   }
-  else{
+  else{ # Generate new code
     num <- nrow(saved_codes) + 1
     if(num <= 26){
       project_code <- (num + 64) %>% as.raw() %>% rawToChar()
@@ -208,36 +225,51 @@ generate_internal_sample_ids <- function(n, project_title,save_code){
       write.table(newrow,"project_codes.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F, eol = "\r\n")
     }
   }
-  int_id <- rep(NA,n)
+  
+  internal_id <- rep(NA,n)
   for(i in 1:n){
-    int_id[i] <- paste(project_code,as.character(i),sep="_")
+    internal_id[i] <- paste(project_code,as.character(i),sep="_")
   }
-  int_id
+  internal_id
 }
 
-# Randomizes the samples, adds QC and generates internal ID
+# Randomize the samples, add QC and generate internal ID
+# INPUT:
+#     dframe: data frame containing the sample information
+#     project_title: character
+#     save_code: Boolean indicating if the code should be saved
+#     folder: character, path to project home folder
+#     qc_int: interval of the QC samples = number of samples between QC samples
+#     modes: 
 modify_sample <- function(dframe, project_title, save_code, folder, qc_int, modes,
-                          qc_begins, random, position_type, qc_pos_chars, second_column){
+                          qc_begins, sample_order, grouping_column, position_type, qc_pos_chars, second_column){
   
-  # Randomize row order
-  n <- nrow(dframe)
-  if(random){
-    set.seed( project_title %>% charToRaw() %>% as.numeric() %>% sum() )
-    dframe_ord <- dframe[sample(n),]
-  }
-  else{
-    dframe_ord <- dframe
-  }
-  # Generate internal ID for non-QC samples
-  
-  dframe_ord$INTERNAL_SAMPLE_ID <- generate_internal_sample_ids(n,project_title, save_code)
-  
-  classes <- lapply(dframe_ord, class) %>% unlist() %>% unname()
+  # set factor columns to character
+  classes <- lapply(dframe, class) %>% unlist() %>% unname()
   for (i in 1:length(classes)){
     if(classes[i] == "factor"){
-      dframe_ord[,i] <- as.character(dframe_ord[,i])
+      dframe[,i] <- as.character(dframe[,i])
     }
   }
+  
+  # Randomize row order
+  # seed generated from project title
+  n <- nrow(dframe)
+  set.seed( project_title %>% charToRaw() %>% as.numeric() %>% sum() )
+  if(sample_order == "random_global"){
+    dframe_ord <- dframe[sample(n),]
+  }
+  else if(sample_order == "random_group"){
+    dframe_ord <- dframe %>%
+      group_by_(grouping_column) %>%
+      sample_frac(1)
+  }
+  else if(sample_order == "original"){
+    dframe_ord <- dframe
+  }
+  
+  # Generate internal ID for non-QC samples
+  dframe_ord$INTERNAL_SAMPLE_ID <- generate_internal_sample_ids(n,project_title, save_code)
   
   # 
   if (!is.na(qc_int)){
@@ -311,13 +343,58 @@ modify_sample <- function(dframe, project_title, save_code, folder, qc_int, mode
   return(list(MPP = dframe_MPP,worklist = dframe_worklist))
 }
 
-separate_worklists <- function(dframe,modes){
+add_auto_msms <- function(dframe, mode, msms_qc, msms_sample_ids){
+  
+  dframe$METHOD <- paste0(mode,".m")
+  
+  if(is.null(msms_qc) & is.null(msms_sample_ids)){
+    return(dframe)
+  }
+  
+  last_split <- dframe[nrow(dframe),]$DATAFILE_LONG %>% as.character() %>% strsplit("") %>% unlist()
+  l <- length(last_split)
+  df_number <- last_split[(l-5):(l-2)] %>% paste0(collapse="") %>% as.numeric()
+  df_path <- last_split[-((l-5):l)] %>% paste0(collapse="")
+  
+  if(msms_qc){
+    msms_sample_ids <- c(msms_sample_ids,"QC_1")
+  }
+  
+  n_msms_samples <- length(msms_sample_ids)
+  dframe_bottom <- matrix(NA,3*n_msms_samples+1,ncol(dframe)) %>% data.frame()
+  colnames(dframe_bottom) <- colnames(dframe)
+  
+  msms_voltages <- c("10V","20V","40V")
+  for (i in 1:n_msms_samples){
+    position <- dframe[dframe$INTERNAL_SAMPLE_ID %in% msms_sample_ids[i],]$SAMPLE_POSITION %>% as.character()
+    
+    for (j in 1:3){
+      row <- (i-1)*3 +j
+      df_number <- df_number + 1
+      dframe_bottom[row,]$INTERNAL_SAMPLE_ID <- paste(msms_sample_ids[i],"auto_msms",msms_voltages[j],sep="_")
+      dframe_bottom[row,]$SAMPLE_POSITION <- position
+      dframe_bottom[row,]$DATAFILE_LONG <- paste(df_path,str_pad(df_number, width = 4, pad = "0"),".d",sep="")
+      dframe_bottom[row,]$METHOD <- paste0(mode,"_AutoMSMS_",msms_voltages[j],".m")
+    }
+  }
+  
+  dframe_bottom[nrow(dframe_bottom),]$INTERNAL_SAMPLE_ID <- "STOP"
+  dframe_bottom[nrow(dframe_bottom),]$SAMPLE_POSITION <- "Vial 1"
+  dframe_bottom[nrow(dframe_bottom),]$DATAFILE_LONG <- paste(df_path,str_pad(df_number + 1, width = 4, pad = "0"),".d",sep="")
+  dframe_bottom[nrow(dframe_bottom),]$METHOD <- "STOP.m"
+  
+  dframe <- rbind(dframe, dframe_bottom) %>% select(INTERNAL_SAMPLE_ID, SAMPLE_POSITION, METHOD, DATAFILE_LONG)
+  dframe
+}
+
+separate_worklists <- function(dframe, modes, msms_qc, msms_sample_ids){
   separated <- as.list(rep(NA,4))
   modeopts <- c("HILIC_neg","HILIC_pos","RP_neg","RP_pos")
   for(i in 1:4){
     if(modeopts[i] %in% modes){
       dframe_tmp <- dframe %>% filter(grepl(modeopts[i],DATAFILE_LONG))
-      colnames(dframe_tmp) <- c("Sample Name","Sample Position","Data File")
+      dframe_tmp <- add_auto_msms(dframe_tmp, modeopts[i], msms_qc, msms_sample_ids)
+      colnames(dframe_tmp) <- c("Sample Name","Sample Position","Method", "Data File")
       separated[[i]] <- dframe_tmp
       names(separated)[i] <- modeopts[i]
     }
