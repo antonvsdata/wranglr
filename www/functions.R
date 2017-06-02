@@ -109,30 +109,47 @@ generate_datafile_labels <- function(folder,project_title,modes,qc_begins,n_mod)
 # x, y = position on plate
 # z = plate number (1 or 2)
 # These coordinates are used by generate_sample_positions
-get_qc_position <- function(qc_char,position_type){
-  qc_char <- strsplit(qc_char,split = NULL) %>% unlist()
-  len <- length(qc_char)
-  if(!len %in% c(5,6) | qc_char[1] != "P" | !grepl("[0-2]",qc_char[2]) | qc_char[3] != "-" |
-     !grepl("[A-H]",qc_char[4]) | !grepl("[0-9]",qc_char[5])){
-    stop("Invalid QC sample position")
-  }
-  if(len == 6 & position_type == "well"){
-    if(!grepl("[0-2]",qc_char[6]) | as.numeric(paste0(qc_char[5],qc_char[6])) > 12){
-      stop("Invalid QC sample position")
+get_qc_positions <- function(qc_pos_chars,position_type){
+  
+  x <- rep(NA,length(qc_pos_chars))
+  y <- x
+  z <- x
+  
+  for (i in 1:length(qc_pos_chars)){
+    qc_pos_char <- qc_pos_chars[[i]]
+    qc_char <- strsplit(qc_pos_char,split = NULL) %>% unlist()
+    len <- length(qc_char)
+    
+    if(grepl("^Vial ", qc_pos_char) & len == 6 & grepl("[1-6]",qc_char[6])){
+      x[i] <- -1
+      y[i] <- -1
+      z[i] <- -1
+      next
     }
+    
+    if(!len %in% c(5,6) | qc_char[1] != "P" | !grepl("[0-2]",qc_char[2]) | qc_char[3] != "-" |
+       !grepl("[A-H]",qc_char[4]) | !grepl("[0-9]",qc_char[5])){
+      stop(paste("Invalid QC sample position:",qc_pos_char))
+    }
+    if(len == 6 & position_type == "well"){
+      if(!grepl("[0-2]",qc_char[6]) | as.numeric(paste0(qc_char[5],qc_char[6])) > 12){
+        stop(paste("Invalid QC sample position:",qc_pos_char))
+      }
+    }
+    if(position_type == "vial" & (len == 6 | !grepl("[A-F]",qc_char[4]))){
+      stop(paste("Invalid QC sample position:",qc_pos_char))
+    }
+    if(len == 5){
+      x[i] <- as.numeric(qc_char[5])
+    }
+    else{
+      x[i] <- as.numeric(paste0(qc_char[5],qc_char[6]))
+    }
+    y[i] <- as.numeric(charToRaw(qc_char[4])) - 64
+    z[i] <- as.numeric(qc_char[2])
   }
-  if(position_type == "vial" & (len == 6 | !grepl("[A-F]",qc_char[4]))){
-    stop("Invalid QC sample position")
-  }
-  if(len == 5){
-    x <- as.numeric(qc_char[5])
-  }
-  else{
-    x <- as.numeric(paste0(qc_char[5],qc_char[6]))
-  }
-  y <- as.numeric(charToRaw(qc_char[4])) - 64
-  z <- as.numeric(qc_char[2])
-  return(list(x=x,y=y,z=z))
+  
+  return(data.frame(x,y,z))
 }
 
 # Generate sample positions for all the samples after initial QCs
@@ -143,9 +160,9 @@ get_qc_position <- function(qc_char,position_type){
 #     qc_int: interval of the QC samples = number of samples between QC samples
 # OUTPUT:
 #     character vector of positions for worklist file
-generate_sample_positions <- function(n,position_type,qc_pos_char,qc_int){
+generate_sample_positions <- function(n, position_type, qc_pos_char, all_qc_pos_chars, qc_int){
   positions <- rep(NA,n)
-  qc <- get_qc_position(qc_pos_char,position_type)
+  qc <- get_qc_positions(all_qc_pos_chars, position_type)
   
   # Set the size of the plate
   if(position_type == "well"){
@@ -161,7 +178,7 @@ generate_sample_positions <- function(n,position_type,qc_pos_char,qc_int){
   y <- 1
   z <- 1
   
-  if(x == qc$x & y == qc$y & z == qc$z){
+  if(any(x == qc$x & y == qc$y & z == qc$z)){ # skip the positions reserved for QC samples
     x <- x +1
   }
   
@@ -172,10 +189,10 @@ generate_sample_positions <- function(n,position_type,qc_pos_char,qc_int){
     else{
       positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
       x <- x + 1
-      if (x == qc$x & y == qc$y & z == qc$z){ # skip the position reserved for QC sample
+      if (any(x == qc$x & y == qc$y & z == qc$z)){ # skip the positions reserved for QC samples
         x <- x + 1
       }
-      if(x == x_cut){
+      if(x >= x_cut){
         x <- 1
         y <- y + 1
         if(y == y_cut){
@@ -298,11 +315,11 @@ modify_sample <- function(dframe, project_title, save_code, folder, qc_int, mode
     QC <- rep(FALSE,n)
   }
   
-  
+  # Generate sample positions
   # Add QC rows to beginning and combine
   for(i in 1:length(modes)){
     dframe_tmp <- dframe_mod
-    dframe_tmp$SAMPLE_POSITION <- generate_sample_positions(nrow(dframe_tmp),position_type,qc_pos_chars[[i]],qc_int)
+    dframe_tmp$SAMPLE_POSITION <- generate_sample_positions(nrow(dframe_tmp),position_type,qc_pos_chars[[i]],qc_pos_chars,qc_int)
     QC_tmp <- c(rep(TRUE,qc_begins[[i]]),QC)
     dummyframe <- matrix(NA,qc_begins[[i]],ncol(dframe_tmp)) %>% data.frame()
     colnames(dummyframe) <- colnames(dframe_tmp)
