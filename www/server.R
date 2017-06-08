@@ -316,11 +316,8 @@ shinyServer(function(input,output){
       return(NULL)
     }
     samples <- sample_modified()$MPP
-    print(input$msms_samples_choice)
     indx <- which(as.character(samples$SAMPLE_ID) %in% input$msms_samples_choice)
-    print(indx)
     msms_sample_ids <- samples$INTERNAL_SAMPLE_ID[indx] %>% unique()
-    print(msms_sample_ids)
     separate_worklists(sample_modified()$worklist,input$modes, input$msms_qc, msms_sample_ids)
   })
   

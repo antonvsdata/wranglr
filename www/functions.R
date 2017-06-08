@@ -178,8 +178,8 @@ generate_sample_positions <- function(n, position_type, qc_pos_char, all_qc_pos_
   y <- 1
   z <- 1
   
-  if(any(x == qc$x & y == qc$y & z == qc$z)){ # skip the positions reserved for QC samples
-    x <- x +1
+  while(any(x == qc$x & y == qc$y & z == qc$z)){ # skip the positions reserved for QC samples
+    x <- x + 1
   }
   
   for(i in 1:n){
@@ -189,7 +189,7 @@ generate_sample_positions <- function(n, position_type, qc_pos_char, all_qc_pos_
     else{
       positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
       x <- x + 1
-      if (any(x == qc$x & y == qc$y & z == qc$z)){ # skip the positions reserved for QC samples
+      while(any(x == qc$x & y == qc$y & z == qc$z)){ # skip the positions reserved for QC samples
         x <- x + 1
       }
       if(x >= x_cut){
@@ -350,12 +350,12 @@ modify_sample <- function(dframe, project_title, save_code, folder, qc_int, mode
   dframe_big$DATAFILE <- datafile_labels$short
   dframe_big$DATAFILE_LONG <-datafile_labels$long
   
-  dframe_big <- dframe_big %>% select(DATAFILE,RUN_ORDER,INTERNAL_SAMPLE_ID,SAMPLE_ID,QC,everything())
+  dframe_big <- dframe_big %>% dplyr::select(DATAFILE,RUN_ORDER,INTERNAL_SAMPLE_ID,SAMPLE_ID,QC,everything())
   index <- which(colnames(dframe_big) == second_column)
   dframe_big <- cbind(dframe_big[,c(1,index)],dframe_big[,-c(1,index)])
   
-  dframe_MPP <- dframe_big %>% select(-DATAFILE_LONG,-SAMPLE_POSITION)
-  dframe_worklist <- dframe_big %>% select(INTERNAL_SAMPLE_ID,SAMPLE_POSITION,DATAFILE_LONG)
+  dframe_MPP <- dframe_big %>% dplyr::select(-DATAFILE_LONG,-SAMPLE_POSITION)
+  dframe_worklist <- dframe_big %>% dplyr::select(INTERNAL_SAMPLE_ID,SAMPLE_POSITION,DATAFILE_LONG)
   
   return(list(MPP = dframe_MPP,worklist = dframe_worklist))
 }
