@@ -4,8 +4,6 @@ navbarPage("Wranglr",
   
   tabPanel("Sample information file",
            includeCSS("style.css"),
-           # Uncomment if you like pink
-           # includeCSS("alternative_style.css"),
            
            h4("Validate sample information file:"),
            br(),

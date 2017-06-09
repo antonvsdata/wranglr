@@ -1,3 +1,5 @@
+
+# Warnings related to the sample information sheet
 warnings_sample <- function(dframe){
   msg <- ""
   vars <- colnames(dframe)
@@ -22,6 +24,7 @@ warnings_sample <- function(dframe){
   return(msg)
 }
 
+# Warnings related to the metadata sheet
 warnings_meta <- function(sample_dframe,meta_dframe){
   msg <- ""
   
@@ -38,7 +41,7 @@ warnings_meta <- function(sample_dframe,meta_dframe){
   if(!condition){
     msg <- paste(msg,"- All variables do not match the columns in sample information sheet!",sep = "<br/>")
   }
-  extra_vars <- sample_dframe %>% colnames() %>% setdiff(c("SAMPLE_ID,SUBJECT_ID,GROUP,TIME"))
+  extra_vars <- sample_dframe %>% colnames() %>% dplyr::setdiff(c("SAMPLE_ID,SUBJECT_ID,GROUP,TIME"))
   condition2 <- toupper(extra_vars) %in% toupper(meta_dframe$VARIABLE) %>% all()
   if(!condition2){
     msg <- paste(msg,"- Some extra variables lack description",sep="<br/>")
@@ -46,6 +49,7 @@ warnings_meta <- function(sample_dframe,meta_dframe){
   msg
 }
 
+# Get the number of variables and the number of variables which have description
 info_variables <- function(sample_dframe,meta_dframe){
   msg <- paste("Found",as.character(ncol(sample_dframe)),"variables")
   described <- toupper(colnames(sample_dframe)) %in% toupper(meta_dframe$VARIABLE) %>% sum()
@@ -53,21 +57,31 @@ info_variables <- function(sample_dframe,meta_dframe){
   msg
 }
 
-# Counts the number of groups and timepoints
+# Counts the number of groups and/or timepoints
 count_group_time <- function(dframe){
   colnames(dframe) <- colnames(dframe) %>% toupper()
   msg <- ""
   if("GROUP" %in% colnames(dframe)){
-   groups <- dframe$GROUP %>% unique() %>% length()
+   groups <- dframe$GROUP %>% base::unique() %>% length()
    msg <- paste("Number of groups:",as.character(groups))
   }
   if("TIME" %in% colnames(dframe)){
-    times <- dframe$TIME %>% unique() %>% length()
+    times <- dframe$TIME %>% base::unique() %>% length()
     msg <- paste(msg,"Number of time points:",sep = "<br/>") %>% paste(as.numeric(times))
   }
   msg
 }
 
+# Generates datafile labels
+# INPUT:
+#       - folder: character
+#       - project_title: character
+#       - modes: character vector of modes run
+#       - qc_begins: named list of numbers of QC samples in the beginning of each mode
+#       - n_mod: number of samples excluding the QCs in the beginning
+# OUTPUT: list of two types of datafile labels
+#       - short: character vector of datafile labels without complete path and .d file ending
+#       - long: character vector of datafile labels with complete path and .d file ending
 generate_datafile_labels <- function(folder,project_title,modes,qc_begins,n_mod){
   labels <- c()
   longs <- c()
@@ -157,6 +171,7 @@ get_qc_positions <- function(qc_pos_chars,position_type){
 #     n: number of samples
 #     position_type: the type of plate to use, "vial" for 54-vial plate or "well" for 96-well plate
 #     qc_pos_char: character giving the position of the QC samples, e.g. "P2-H12"
+#     all_qc_pos_chars: character vector of the QC sample positions for all the modes
 #     qc_int: interval of the QC samples = number of samples between QC samples
 # OUTPUT:
 #     character vector of positions for worklist file
@@ -251,13 +266,20 @@ generate_internal_sample_ids <- function(n, project_title,save_code){
 }
 
 # Randomize the samples, add QC and generate internal ID
+# Generate worklist files with AutoMSMS and STOP
 # INPUT:
 #     dframe: data frame containing the sample information
 #     project_title: character
 #     save_code: Boolean indicating if the code should be saved
 #     folder: character, path to project home folder
 #     qc_int: interval of the QC samples = number of samples between QC samples
-#     modes: 
+#     modes: character vector of modes run
+#     qc_begins: named list of numbers of QC samples in the beginning of each mode
+#     sample_order: "random_global", "random_group" or "original"
+#     grouping column: grouping column name, NULL unless sample_order = "random_group"
+#     position_type: the type of plate to use, "vial" for 54-vial plate or "well" for 96-well plate
+#     qc_pos_chars: character vector of the QC sample positions for all the modes
+#     second_column: character, name of the second column
 modify_sample <- function(dframe, project_title, save_code, folder, qc_int, modes,
                           qc_begins, sample_order, grouping_column, position_type, qc_pos_chars, second_column){
   
@@ -354,12 +376,21 @@ modify_sample <- function(dframe, project_title, save_code, folder, qc_int, mode
   index <- which(colnames(dframe_big) == second_column)
   dframe_big <- cbind(dframe_big[,c(1,index)],dframe_big[,-c(1,index)])
   
+  # Separate dframe_big into MPP and worklist tables
   dframe_MPP <- dframe_big %>% dplyr::select(-DATAFILE_LONG,-SAMPLE_POSITION)
   dframe_worklist <- dframe_big %>% dplyr::select(INTERNAL_SAMPLE_ID,SAMPLE_POSITION,DATAFILE_LONG)
   
   return(list(MPP = dframe_MPP,worklist = dframe_worklist))
 }
 
+# Add AutoMSMS runs and METHOD column to worklist table
+# INPUT:
+#       dframe: data frame, worklist table
+#       mode: the mode used
+#       msms_qc: boolean, should AutoMSM be run on a QC sample
+#       msms_sample_ids: internal sample IDs of the samples going to AutoMSMS
+# OUTPUT:
+#       data frame with AutoMSM added
 add_auto_msms <- function(dframe, mode, msms_qc, msms_sample_ids){
   
   dframe$METHOD <- paste0(mode,".m")
@@ -368,6 +399,7 @@ add_auto_msms <- function(dframe, mode, msms_qc, msms_sample_ids){
     return(dframe)
   }
   
+  # Get the datafile path and number of the last datafile
   last_split <- dframe[nrow(dframe),]$DATAFILE_LONG %>% as.character() %>% strsplit("") %>% unlist()
   l <- length(last_split)
   df_number <- last_split[(l-5):(l-2)] %>% paste0(collapse="") %>% as.numeric()
@@ -404,12 +436,20 @@ add_auto_msms <- function(dframe, mode, msms_qc, msms_sample_ids){
   dframe
 }
 
+# Separates worklist table, adds AutoMSMS
+# INPUT:
+#       dframe: data frame with workllists of all the modes
+#       modes: modes: character vector of modes run
+#       msms_qc: boolean, should AutoMSM be run on a QC sample
+#       msms_sample_ids: internal sample IDs of the samples going to AutoMSMS
+# OUTPUT:
+#       named list of worklist tables, names = modes
 separate_worklists <- function(dframe, modes, msms_qc, msms_sample_ids){
   separated <- as.list(rep(NA,4))
   modeopts <- c("HILIC_neg","HILIC_pos","RP_neg","RP_pos")
   for(i in 1:4){
     if(modeopts[i] %in% modes){
-      dframe_tmp <- dframe %>% filter(grepl(modeopts[i],DATAFILE_LONG))
+      dframe_tmp <- dframe %>% dplyr::filter(grepl(modeopts[i],DATAFILE_LONG))
       dframe_tmp <- add_auto_msms(dframe_tmp, modeopts[i], msms_qc, msms_sample_ids)
       colnames(dframe_tmp) <- c("Sample Name","Sample Position","Method", "Data File")
       separated[[i]] <- dframe_tmp
@@ -419,6 +459,9 @@ separate_worklists <- function(dframe, modes, msms_qc, msms_sample_ids){
   separated
 }
 
+# ----- MPP tab --------
+
+# Create warnings based on processes sample info file
 warnings_sample_processed <- function(dframe){
   msg <- ""
   incProgress(amount = 0.5, message = "Checking file")
@@ -432,13 +475,15 @@ warnings_sample_processed <- function(dframe){
   return(msg)
 }
 
+# Count non-QC and QC samples in processes sample info file
 get_sample_counts <- function(dframe){
   incProgress(amount = 0.2, message = "Counting samples")
-  orig_n <- dframe %>% filter(!QC) %>% nrow()
-  qc_n <- dframe %>% filter(QC) %>% nrow()
+  orig_n <- dframe %>% dplyr::filter(!QC) %>% nrow()
+  qc_n <- dframe %>% dplyr::filter(QC) %>% nrow()
   msg <- paste("Sample information file OK",paste("Found",orig_n,"original samples and",qc_n,"QC samples"),sep="<br/>")
 }
 
+# Load data from MPP file
 load_metabo_data <- function(file, scan.lines=20) {
   
   # Skip comment lines starting with #
@@ -497,17 +542,22 @@ extract_compound_data <- function(data, analysis_mode,sample_dframe) {
   result.df
 }
 
+# Extract annotations from the full raw data set
 extract_annotations <- function(data){
   index <- which(colnames(data) == "Compound")
   index <- c(index, grep(".raw.$", colnames(data)))
   as.data.frame(data[,-index])
 }
 
-# Combines abundance values into one data matrix
-# Splits the information output of MPP into two files:
-# - abundance data matrix
-# - annotation file with the other columns
-
+# Combine abundance values into one data matrix
+# Split the information output of MPP into two files:
+# INPUT:
+#     mpp_files: named list of the uploaded MPP tables, names = modes
+#     modes: character vector of the modes run
+#     sample_dframe: data frame read from processes sample info file
+# OUTPUT: list
+#     - abundance data matrix
+#     - annotation data frame with the other columns
 combine_mpp <- function(mpp_files,modes,sample_dframe){
   
   if(length(mpp_files) > 1){
@@ -566,15 +616,3 @@ combine_mpp <- function(mpp_files,modes,sample_dframe){
   
   return(list(annotations = annotations,data_matrix = data_matrix_joined))
 }
-
-# Testi
-# setwd("~/Projects/Metabora/Wranglr/testdata")
-# hilic_neg <- load_metabo_data("Fold from MPP HILIC neg.txt")[1:6,c(1,30:34,358:365)]
-# hilic_pos <- load_metabo_data("Fold from MPP HILIC pos.txt")[1:6,c(1,30:34,358:365)]
-# rp_neg <- load_metabo_data("Fold from MPP RP neg.txt")[1:6,c(1,30:34,358:365)]
-# rp_pos <- load_metabo_data("Fold from MPP RP pos.txt")[1:6,c(1,30:34,358:365)]
-# View(data.frame(colnames(hilic_neg),colnames(hilic_pos),colnames(rp_neg),colnames(rp_pos)))
-# DATAFILE <- c(colnames(hilic_neg)[2:6],colnames(hilic_pos)[2:6],colnames(rp_neg)[2:6],colnames(rp_pos)[2:6]) %>% gsub(".raw.$", "", .)
-# INTERNAL_SAMPLE_ID <- sample(5)
-# sample_dframe <- data.frame(DATAFILE,INTERNAL_SAMPLE_ID)
-# lets_see <- combine_mpp(hilic_neg,hilic_pos,rp_neg,rp_pos,sample_dframe)

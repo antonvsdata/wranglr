@@ -5,10 +5,12 @@ library(stringr)
 
 source("functions.R")
 
+# Set the maximum size of uploaded files to 30MB
 options(shiny.maxRequestSize=30*1024^2)
 
 shinyServer(function(input,output){
   
+  # Check that the input sample list file can be read correctly
   output$format_check <- renderUI({
     if (is.null(input$sample_input)){
       return(NULL)
@@ -22,6 +24,7 @@ shinyServer(function(input,output){
     }
   })
   
+  # Read the input sample list file
   sample_dframe <- reactive({
     if (is.null(input$sample_input)){
       return(NULL)
@@ -33,7 +36,7 @@ shinyServer(function(input,output){
     datafile
   })
   
-  # Validates that the sample information file matches the required format
+  # Validate that the sample information sheet matches the required format
   sample_warnings <- reactive({
     if (is.null(sample_dframe())){
       return(NULL)
@@ -42,6 +45,7 @@ shinyServer(function(input,output){
     return(warnings)
   })
   
+  # Ouput possible warnings about the sample information sheet
   output$sample_warnings <- renderUI({
     if (is.null(sample_warnings())){
       return(NULL)
@@ -52,6 +56,7 @@ shinyServer(function(input,output){
     paste("<p style=\"color: red;\">",sample_warnings(),"</p>",sep="") %>% HTML()
   })
   
+  # Count the number of groups and/or timepoints in the sample info sheet
   output$group_time <- renderUI({
     if(is.null(sample_dframe())){
       return(NULL)
@@ -65,7 +70,7 @@ shinyServer(function(input,output){
     )
   })
   
-  # Prints the output of bbd::summarize_data
+  # Print the output of bbd::summarize_data
   output$summarize_data <- renderUI({
     if (is.null(sample_dframe())){
       return(NULL)
@@ -78,6 +83,7 @@ shinyServer(function(input,output){
     out_text %>% HTML()
   })
   
+  # Read the metadata sheet from sample info file
   sample_meta_dframe <- reactive({
     if(is.null(input$sample_input)){
       return(NULL)
@@ -92,7 +98,7 @@ shinyServer(function(input,output){
     read.xlsx(input$sample_input$datapath, sheetIndex = 2)
   })
   
-  # Checks that the file matches the required format and that the variables described
+  # Check that metadata sheet matches the required format and that the variables described
   # are found in the sample information file
   output$meta_warnings <- renderUI({
     if(is.null(sample_dframe())){
@@ -112,6 +118,7 @@ shinyServer(function(input,output){
                    p(HTML(warnings),style="color:red;"))
   })
   
+  # Outputs the number of variables and number of descriptions
   output$variables <- renderText({
     if(is.null(sample_dframe()) | is.null(sample_meta_dframe())){
       return(NULL)
@@ -119,6 +126,8 @@ shinyServer(function(input,output){
     info_variables(sample_dframe(),sample_meta_dframe())
   })
   
+  # Project home folder input
+  # defaults to "D:\\MassHunter\\Data\\[project_title]"
   output$destination <- renderUI({
     if(input$project_title != ""){
       textInput("folder","Project home folder",
@@ -130,6 +139,13 @@ shinyServer(function(input,output){
     }
   })
   
+  output$grouping_column <- renderUI({
+    selectInput("grouping_column_choice","Column containing groups for randomization",
+                choices = colnames(sample_dframe()))
+  })
+  
+  # Choices for QC positions
+  # All default to last position on the second plate
   output$qc_poschars <- renderUI({
     if(input$sample_position_type == "well"){
       qc_def <- "P2-H12"
@@ -159,6 +175,22 @@ shinyServer(function(input,output){
     )
   })
   
+  # Choice of samples for AutoMSMS
+  # values from original SAMPLE_ID column
+  output$msms_samples <- renderUI({
+    selectizeInput("msms_samples_choice","Choose samples for AutoMSMS",
+                   choices = sample_dframe()$SAMPLE_ID, multiple = TRUE)
+  })
+  
+  # Coice of second column for MPP
+  output$second_column <- renderUI({
+    selectInput("second_column_choice","Second column for MPP",
+                choices = c(colnames(sample_dframe()),"QC"),
+                selected = default_column())
+  })
+  
+  # Default column for MPP
+  # GROUP if found, QC otherwise
   default_column <- reactive({
     if(is.null(sample_dframe())){
       return(NULL)
@@ -170,22 +202,8 @@ shinyServer(function(input,output){
     return("QC")
   })
   
-  output$msms_samples <- renderUI({
-    selectizeInput("msms_samples_choice","Choose samples for AutoMSMS",
-                   choices = sample_dframe()$SAMPLE_ID, multiple = TRUE)
-  })
-  
-  output$second_column <- renderUI({
-    selectInput("second_column_choice","Second column for MPP",
-                choices = c(colnames(sample_dframe()),"QC"),
-                selected = default_column())
-  })
-  
-  output$grouping_column <- renderUI({
-    selectInput("grouping_column_choice","Column containing groups for randomization",
-                choices = colnames(sample_dframe()))
-  })
-  
+  # Read the number of leading QC samples for each mode
+  # output: a named list, names = modes
   qc_begins <- reactive({
     begins <- list()
     if("HILIC_neg" %in% input$modes){
@@ -203,6 +221,8 @@ shinyServer(function(input,output){
     begins
   })
   
+  # Read the position of QC samples for each mode
+  # output: a named list, names = modes
   qc_pos_chars <- eventReactive(input$modify_sample,{
     poschars <- list()
     if("HILIC_neg" %in% input$modes){
@@ -220,7 +240,11 @@ shinyServer(function(input,output){
     poschars
   })
   
-  # Randomizes the samples, adds QC and generates internal IDinput$project_title_mpp == ""input$project_title_mpp == ""input$project_title_mpp == ""input$project_title_mpp == ""input$project_title_mpp == ""
+  # Randomize the samples, add QC and generate internal ID
+  # Generate unseparated worklist file
+  # OUTPUT: list of 2 data frames
+  #       - MPP: table for MPP and data analysis
+  #       - worklist: a data frame containing the worklists for all the modes
   sample_modified <- eventReactive(input$modify_sample,{
     if(is.null(sample_dframe()) | input$project_title == "" | !grepl('^[A-Za-z0-9_.-]+$', input$project_title)){
       return(NULL)
@@ -232,6 +256,26 @@ shinyServer(function(input,output){
                   input$sample_order, input$grouping_column_choice, input$sample_position_type, qc_pos_chars(), input$second_column_choice)
   })
   
+  # Separate the worklist files
+  # Add AutoMSMS and STOP to the end of file
+  separated_worklist <- reactive({
+    if(is.null(sample_modified())){
+      return(NULL)
+    }
+    samples <- sample_modified()$MPP
+    indx <- which(as.character(samples$SAMPLE_ID) %in% input$msms_samples_choice)
+    msms_sample_ids <- samples$INTERNAL_SAMPLE_ID[indx] %>% unique()
+    separate_worklists(sample_modified()$worklist,input$modes, input$msms_qc, msms_sample_ids)
+  })
+  
+  output$sample_mod_info <- renderUI({
+    sample_modified_info()
+  })
+  
+  # Check that everything is OK
+  # Process the sample information file
+  # Create display for MPP file and worklist file
+  # Create download buttons
   sample_modified_info <-eventReactive(input$modify_sample,{
     if(is.null(sample_dframe())){
       return(p("Please input a sample information file",style = "color:red;"))
@@ -261,6 +305,7 @@ shinyServer(function(input,output){
     ))
   })
   
+  # dataTableOutput of either MPP file or the worklist file
   output$sample_mod_table <- renderUI({
     if(input$table_choice == "MPP"){
       dataTableOutput("sample_mod")
@@ -270,18 +315,17 @@ shinyServer(function(input,output){
     }
   })
   
+  # First worklist file
   output$sample_mod_worklist <- renderDataTable({
     separated_worklist()[[1]]
   })
   
+  # MPP file
   output$sample_mod <- renderDataTable({
     sample_modified()$MPP
   })
   
-  output$sample_mod_info <- renderUI({
-    sample_modified_info()
-  })
-  
+  # Download button for MPP file
   output$sample_mod_down_button <- downloadHandler(
     filename = paste(input$project_title,"sample_info_processed.csv",sep = "_"),
     
@@ -290,6 +334,7 @@ shinyServer(function(input,output){
     }
   )
   
+  # Download buttons for worklist files
   output$worklist_downloads <- renderUI({
     tagList(
       fluidRow(
@@ -309,16 +354,6 @@ shinyServer(function(input,output){
                                 downloadButton("worklist_rp_pos_download","RP pos file")))
       )
     )
-  })
-  
-  separated_worklist <- reactive({
-    if(is.null(sample_modified())){
-      return(NULL)
-    }
-    samples <- sample_modified()$MPP
-    indx <- which(as.character(samples$SAMPLE_ID) %in% input$msms_samples_choice)
-    msms_sample_ids <- samples$INTERNAL_SAMPLE_ID[indx] %>% unique()
-    separate_worklists(sample_modified()$worklist,input$modes, input$msms_qc, msms_sample_ids)
   })
   
   output$worklist_hilic_neg_download <- downloadHandler(
@@ -355,10 +390,13 @@ shinyServer(function(input,output){
   
   # |--------------------------------- MPP tab ------------------------------------------------------------------|
   
+  # Project title input
+  # Defaults to project title on the first page
   output$project_title_mirror <- renderUI({
     textInput("project_title_mpp","Project Title", value = input$project_title)
   })
   
+  # Read the processed sample info file
   sample_dframe_processed <- reactive({
     if (is.null(input$sample_input_mpp)){
       return(NULL)
@@ -367,6 +405,7 @@ shinyServer(function(input,output){
     read.csv(input$sample_input_mpp$datapath, h = T)
   })
   
+  # Create warnings for the processed sample info file
   sample_processed_warnings <- reactive({
     if(is.null(sample_dframe_processed())){
       return(NULL)
@@ -374,6 +413,8 @@ shinyServer(function(input,output){
     warnings_sample_processed(sample_dframe_processed())
   })
   
+  # Display warnings
+  # If no warnings are found, display the number of samples found
   output$sample_processed_warnings <- renderUI({
     
     withProgress(message = "Checking sample information file", value = 0.2,{
@@ -387,6 +428,8 @@ shinyServer(function(input,output){
     })
   })
   
+  # Check that everything is OK
+  # If yes, display the number of compounds in each mode
   mpp_combine_message <- eventReactive(input$combine_mpp,{
     if(is.null(sample_dframe_processed())){
       return(p("Please input sample information file",style="color:red;"))
@@ -412,6 +455,10 @@ shinyServer(function(input,output){
     mpp_combine_message()
   })
   
+  # Read the uploaded MPP files
+  # OUTPUT: list
+  #       - files: named list of data matrices from MPP, names = modes
+  #       - modes: the modes for which an MPP file was uplpoaded
   mpp_loaded <- reactive({
     if(is.null(input$hilic_neg) & is.null(input$hilic_pos) & is.null(input$rp_neg) & is.null(input$rp_pos)){
       return(NULL)
@@ -444,7 +491,10 @@ shinyServer(function(input,output){
     list(files=files,modes=modes)
   })
   
-  # Returns combined data matrix and annotation file in a list
+  # Combine MPP files
+  # OUTPUT: list
+  #       - annotations: data frame of compound annotations
+  #       - data_matrix: the combined data matrix
   mpp_combine_list <- eventReactive(input$combine_mpp,{
     
     if (is.null(sample_dframe_processed())){
@@ -463,6 +513,7 @@ shinyServer(function(input,output){
     })
   })
   
+  # Preview the data matrix and annotation tables
   output$mpp_preview <- renderUI({
     if (is.null(mpp_combine_list())){
       return(NULL)
@@ -488,6 +539,7 @@ shinyServer(function(input,output){
     }
   })
   
+  # Create download buttons
   output$mpp_download <- renderUI({
     if (is.null(mpp_combine_list())){
       return(NULL)
@@ -519,6 +571,8 @@ shinyServer(function(input,output){
     }
   )
   
+  
+  # Download buttons for instruction PDFs
   output$instructions <- downloadHandler(
     filename = "Wranglr_instructions.pdf",
     
