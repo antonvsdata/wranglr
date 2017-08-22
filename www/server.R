@@ -1,4 +1,4 @@
-library(xlsx)
+library(openxlsx)
 library(bbd)
 library(dplyr)
 library(stringr)
@@ -15,7 +15,7 @@ shinyServer(function(input,output){
     if (is.null(input$sample_input)){
       return(NULL)
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheetIndex = 1))
+    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
     if(class(datafile)=="try-error"){
       return(HTML('<p style = "color: red;"> The file should be in .xlsx format </p>'))
     }
@@ -29,7 +29,7 @@ shinyServer(function(input,output){
     if (is.null(input$sample_input)){
       return(NULL)
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheetIndex = 1))
+    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
     if(class(datafile)=="try-error"){
       return(NULL)
     }
@@ -88,14 +88,14 @@ shinyServer(function(input,output){
     if(is.null(input$sample_input)){
       return(NULL)
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheetIndex = 1))
+    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
     if(class(datafile)=="try-error"){
       return(NULL)
     }
-    if (getSheets(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
+    if (getSheetNames(input$sample_input$datapath) %>% length() < 2){
       return(NULL)
     }
-    read.xlsx(input$sample_input$datapath, sheetIndex = 2)
+    read.xlsx(input$sample_input$datapath, sheet = 2)
   })
   
   # Check that metadata sheet matches the required format and that the variables described
@@ -105,7 +105,7 @@ shinyServer(function(input,output){
       return(NULL)
     }
     meta_title <- p("Variable metadata information:")
-    if(getSheets(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
+    if(getSheetNames(input$sample_input$datapath) %>% length() < 2){
       return(tagList(meta_title,
                      p("No variable metadata sheet found",style="color:red;")))
     }
