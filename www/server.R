@@ -1,4 +1,4 @@
-library(openxlsx)
+library(xlsx)
 library(bbd)
 library(dplyr)
 library(stringr)
@@ -15,7 +15,7 @@ shinyServer(function(input,output){
     if (is.null(input$sample_input)){
       return(NULL)
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
+    datafile <- try(read.xlsx(input$sample_input$datapath, sheetIndex = 1))
     if(class(datafile)=="try-error"){
       return(HTML('<p style = "color: red;"> The file should be in .xlsx format </p>'))
     }
@@ -29,7 +29,7 @@ shinyServer(function(input,output){
     if (is.null(input$sample_input)){
       return(NULL)
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
+    datafile <- try(read.xlsx(input$sample_input$datapath, sheetIndex = 1))
     if(class(datafile)=="try-error"){
       return(NULL)
     }
@@ -88,14 +88,14 @@ shinyServer(function(input,output){
     if(is.null(input$sample_input)){
       return(NULL)
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
+    datafile <- try(read.xlsx(input$sample_input$datapath, sheetIndex = 1))
     if(class(datafile)=="try-error"){
       return(NULL)
     }
-    if (getSheetNames(input$sample_input$datapath) %>% length() < 2){
+    if (getSheets(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
       return(NULL)
     }
-    read.xlsx(input$sample_input$datapath, sheet = 2)
+    read.xlsx(input$sample_input$datapath, sheetIndex = 2)
   })
   
   # Check that metadata sheet matches the required format and that the variables described
@@ -105,7 +105,7 @@ shinyServer(function(input,output){
       return(NULL)
     }
     meta_title <- p("Variable metadata information:")
-    if(getSheetNames(input$sample_input$datapath) %>% length() < 2){
+    if(getSheets(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
       return(tagList(meta_title,
                      p("No variable metadata sheet found",style="color:red;")))
     }
@@ -115,7 +115,7 @@ shinyServer(function(input,output){
                      p("Variable metadata sheet OK")))
     }
     tagList(meta_title,
-                   p(HTML(warnings),style="color:red;"))
+            p(HTML(warnings),style="color:red;"))
   })
   
   # Outputs the number of variables and number of descriptions
@@ -340,7 +340,7 @@ shinyServer(function(input,output){
       fluidRow(
         conditionalPanel(condition = "input.modes.includes('HILIC_neg')",
                          column(4,
-                               downloadButton("worklist_hilic_neg_download","HILIC neg file"))),
+                                downloadButton("worklist_hilic_neg_download","HILIC neg file"))),
         conditionalPanel(condition = "input.modes.includes('HILIC_pos')",
                          column(4,offset = 1,
                                 downloadButton("worklist_hilic_pos_download","HILIC pos file")))),
