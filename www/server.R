@@ -1,4 +1,4 @@
-library(xlsx)
+library(openxlsx)
 library(bbd)
 library(dplyr)
 library(stringr)
@@ -15,7 +15,7 @@ shinyServer(function(input,output){
     if (is.null(input$sample_input)){
       return(NULL)
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheetIndex = 1))
+    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
     if(class(datafile)=="try-error"){
       return(HTML('<p style = "color: red;"> The file should be in .xlsx format </p>'))
     }
@@ -29,7 +29,7 @@ shinyServer(function(input,output){
     if (is.null(input$sample_input)){
       return(NULL)
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheetIndex = 1))
+    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
     if(class(datafile)=="try-error"){
       return(NULL)
     }
@@ -88,14 +88,14 @@ shinyServer(function(input,output){
     if(is.null(input$sample_input)){
       return(NULL)
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheetIndex = 1))
+    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
     if(class(datafile)=="try-error"){
       return(NULL)
     }
-    if (getSheets(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
+    if (names(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
       return(NULL)
     }
-    read.xlsx(input$sample_input$datapath, sheetIndex = 2)
+    read.xlsx(input$sample_input$datapath, sheet = 2)
   })
   
   # Check that metadata sheet matches the required format and that the variables described
@@ -105,7 +105,7 @@ shinyServer(function(input,output){
       return(NULL)
     }
     meta_title <- p("Variable metadata information:")
-    if(getSheets(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
+    if(names(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
       return(tagList(meta_title,
                      p("No variable metadata sheet found",style="color:red;")))
     }
@@ -246,13 +246,13 @@ shinyServer(function(input,output){
   #       - MPP: table for MPP and data analysis
   #       - worklist: a data frame containing the worklists for all the modes
   sample_modified <- eventReactive(input$modify_sample,{
-    if(is.null(sample_dframe()) | input$project_title == "" | !grepl('^[A-Za-z0-9_.-]+$', input$project_title)){
+    if(is.null(sample_dframe()) | input$project_title == "" | input$project_code == "" | !grepl('^[A-Za-z0-9_.-]+$', input$project_title)){
       return(NULL)
     }
     if (!is.null(sample_warnings()) & sample_warnings() != ""){
       return(NULL)
     }
-    modify_sample(sample_dframe(),input$project_title, input$save, input$folder, as.numeric(input$qc_int),input$modes, qc_begins(),
+    modify_sample(sample_dframe(),input$project_title, input$project_code, input$folder, as.numeric(input$qc_int),input$modes, qc_begins(),
                   input$sample_order, input$grouping_column_choice, input$sample_position_type, qc_pos_chars(), input$second_column_choice)
   })
   
@@ -285,6 +285,9 @@ shinyServer(function(input,output){
     }
     if (input$project_title == ""){
       return(p("Please input a project title",style = "color:red;"))
+    }
+    if (input$project_code == ""){
+      return(p("Please input a project code",style = "color:red;"))
     }
     if(!grepl('^[A-Za-z0-9_.-]+$', input$project_title)){
       return(p("Only alphanumeric characters allowed in project title (no umlauts)",style = "color:red;"))

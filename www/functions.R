@@ -223,48 +223,6 @@ generate_sample_positions <- function(n, position_type, qc_pos_char, all_qc_pos_
   positions
 }
 
-# Generate internal sample IDs
-# The form is A_1, A_2, ...
-# The letter (code) can be saved and reused for the same project
-# The next project will have the next code: B, C, ... , AA, ... , AZ, ...
-
-# INPUT:
-#     n: number of samples
-#     project_title: character
-#     save_code: Boolean indicating if the code should be saved
-# OUTPUT:
-#     character vector of internal IDs
-generate_internal_sample_ids <- function(n, project_title,save_code){
-  saved_codes <- read.csv("project_codes.csv")
-  
-  if(project_title %in% saved_codes$Project){ # Use existing code
-    index <- which(saved_codes$Project == project_title)
-    project_code <- saved_codes$Code[index]
-  }
-  else{ # Generate new code
-    num <- nrow(saved_codes) + 1
-    if(num <= 26){
-      project_code <- (num + 64) %>% as.raw() %>% rawToChar()
-    }
-    else{
-      first <- (num %/% 26) %>% as.raw() %>% rawToChar()
-      last <- (num %% 26) %>% as.raw() %>% rawToChar()
-      project_code <- paste0(first,last)
-    }
-    newrow <- data.frame(Project = project_title, Code = project_code)
-    write.table(newrow,"project_log.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
-    if(save_code){
-      write.table(newrow,"project_codes.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F, eol = "\r\n")
-    }
-  }
-  
-  internal_id <- rep(NA,n)
-  for(i in 1:n){
-    internal_id[i] <- paste(project_code,as.character(i),sep="_")
-  }
-  internal_id
-}
-
 # Randomize the samples, add QC and generate internal ID
 # Generate worklist files with AutoMSMS and STOP
 # INPUT:
@@ -280,7 +238,7 @@ generate_internal_sample_ids <- function(n, project_title,save_code){
 #     position_type: the type of plate to use, "vial" for 54-vial plate or "well" for 96-well plate
 #     qc_pos_chars: character vector of the QC sample positions for all the modes
 #     second_column: character, name of the second column
-modify_sample <- function(dframe, project_title, save_code, folder, qc_int, modes,
+modify_sample <- function(dframe, project_title, project_code, folder, qc_int, modes,
                           qc_begins, sample_order, grouping_column, position_type, qc_pos_chars, second_column){
   
   # set factor columns to character
@@ -294,7 +252,7 @@ modify_sample <- function(dframe, project_title, save_code, folder, qc_int, mode
   # Randomize row order
   # seed generated from project title
   n <- nrow(dframe)
-  set.seed( project_title %>% charToRaw() %>% as.numeric() %>% sum() )
+  set.seed( project_title %>% charToRaw() %>% as.numeric() %>% sum())
   if(sample_order == "random_global"){
     dframe_ord <- dframe[sample(n),]
   }
@@ -308,7 +266,7 @@ modify_sample <- function(dframe, project_title, save_code, folder, qc_int, mode
   }
   
   # Generate internal ID for non-QC samples
-  dframe_ord$INTERNAL_SAMPLE_ID <- generate_internal_sample_ids(n,project_title, save_code)
+  dframe_ord$INTERNAL_SAMPLE_ID <- paste(project_code, 1:n, sep="_")
   
   # 
   if (!is.na(qc_int)){
