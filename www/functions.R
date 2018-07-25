@@ -225,29 +225,31 @@ modify_sample <- function(dframe, project_title, project_code, folder, n_plates,
     # If subject id is included, randomize the subject IDs and run all the sampels of one subject in a sequence
     if(include_subject_id){
       subject_order <- sample(unique(dframe[,subject_id_column]))
-      dframe[subject_id_column] <- factor(as.character(dframe[,subject_id_column]), levels = subject_order)
+      dframe[subject_id_column] <- factor(dframe[,subject_id_column], levels = subject_order)
       dframe_ord <- dframe %>%
         group_by_(subject_id_column) %>%
-        sample_frac(1)
+        sample_frac(1) %>%
+        ungroup()
+      dframe_ord[,subject_id_column] <- as.character(dframe_ord[, subject_id_column, drop = TRUE])
     } else { # Completely randomize the data frame
       dframe_ord <- dframe[sample(n),]
     }
-  }
-  else if(sample_order == "random_group") {
+  } else if(sample_order == "random_group") {
     # Randomize subjects inside every group, run all the sample of one sunject in a sequence
     if(include_subject_id){
       subject_order <- sample(unique(dframe[,subject_id_column]))
-      dframe[subject_id_column] <- factor(as.character(dframe[,subject_id_column]), levels = subject_order)
+      dframe[subject_id_column] <- factor(dframe[,subject_id_column], levels = subject_order)
       dframe_ord <- dframe %>%
         group_by_(grouping_column, subject_id_column) %>%
-        sample_frac(1)
+        sample_frac(1) %>%
+        ungroup()
+      dframe_ord[,subject_id_column] <- as.character(dframe_ord[, subject_id_column, drop = TRUE])
     } else { # Randomize completely inside one group
       dframe_ord <- dframe %>%
         group_by_(grouping_column) %>%
         sample_frac(1)
     }
-  }
-  else if(sample_order == "original"){
+  } else if(sample_order == "original"){
     dframe_ord <- dframe
   }
   
@@ -274,8 +276,7 @@ modify_sample <- function(dframe, project_title, project_code, folder, n_plates,
         QC[i] <- FALSE
       }
     }
-  }
-  else{
+  } else {
     dframe_mod <- dframe_ord
     n_mod <- n
     QC <- rep(FALSE,n)
