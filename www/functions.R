@@ -123,7 +123,7 @@ generate_datafile_labels <- function(folder,project_title,modes,qc_begins,n_mod)
 # x, y = position on plate
 # z = plate number (1 or 2)
 # These coordinates are used by generate_sample_positions
-get_qc_positions <- function(qc_pos_chars,position_type){
+get_qc_positions <- function(qc_pos_chars, n_plates, position_type){
   
   x <- rep(NA,length(qc_pos_chars))
   y <- x
@@ -141,7 +141,7 @@ get_qc_positions <- function(qc_pos_chars,position_type){
       next
     }
     
-    if(!len %in% c(5,6) | qc_char[1] != "P" | !grepl("[0-2]",qc_char[2]) | qc_char[3] != "-" |
+    if(!len %in% c(5,6) | qc_char[1] != "P" | !grepl(paste0("[0-", n_plates, "]"),qc_char[2]) | qc_char[3] != "-" |
        !grepl("[A-H]",qc_char[4]) | !grepl("[0-9]",qc_char[5])){
       stop(paste("Invalid QC sample position:",qc_pos_char))
     }
@@ -175,9 +175,9 @@ get_qc_positions <- function(qc_pos_chars,position_type){
 #     qc_int: interval of the QC samples = number of samples between QC samples
 # OUTPUT:
 #     character vector of positions for worklist file
-generate_sample_positions <- function(n, position_type, qc_pos_char, all_qc_pos_chars, qc_int){
+generate_sample_positions <- function(n, n_plates, position_type, qc_pos_char, all_qc_pos_chars, qc_int){
   positions <- rep(NA,n)
-  qc <- get_qc_positions(all_qc_pos_chars, position_type)
+  qc <- get_qc_positions(all_qc_pos_chars, n_plates, position_type)
   
   # Set the size of the plate
   if(position_type == "well"){
@@ -213,7 +213,7 @@ generate_sample_positions <- function(n, position_type, qc_pos_char, all_qc_pos_
         if(y == y_cut){
           y <- 1
           z <- z + 1
-          if(z == 3){
+          if(z == n_plates+1){
             z <- 1
           }
         }
@@ -228,7 +228,8 @@ generate_sample_positions <- function(n, position_type, qc_pos_char, all_qc_pos_
 # INPUT:
 #     dframe: data frame containing the sample information
 #     project_title: character
-#     save_code: Boolean indicating if the code should be saved
+#     project_code: Character concatenated in the beginning of every internal sample ID
+#     n_plates: the number of plates available
 #     folder: character, path to project home folder
 #     qc_int: interval of the QC samples = number of samples between QC samples
 #     modes: character vector of modes run
@@ -238,7 +239,7 @@ generate_sample_positions <- function(n, position_type, qc_pos_char, all_qc_pos_
 #     position_type: the type of plate to use, "vial" for 54-vial plate or "well" for 96-well plate
 #     qc_pos_chars: character vector of the QC sample positions for all the modes
 #     second_column: character, name of the second column
-modify_sample <- function(dframe, project_title, project_code, folder, qc_int, modes,
+modify_sample <- function(dframe, project_title, project_code, folder, n_plates, qc_int, modes,
                           qc_begins, sample_order, grouping_column, position_type, qc_pos_chars, second_column){
   
   # set factor columns to character
@@ -299,7 +300,7 @@ modify_sample <- function(dframe, project_title, project_code, folder, qc_int, m
   # Add QC rows to beginning and combine
   for(i in 1:length(modes)){
     dframe_tmp <- dframe_mod
-    dframe_tmp$SAMPLE_POSITION <- generate_sample_positions(nrow(dframe_tmp),position_type,qc_pos_chars[[i]],qc_pos_chars,qc_int)
+    dframe_tmp$SAMPLE_POSITION <- generate_sample_positions(nrow(dframe_tmp), n_plates, position_type, qc_pos_chars[[i]], qc_pos_chars, qc_int)
     QC_tmp <- c(rep(TRUE,qc_begins[[i]]),QC)
     dummyframe <- matrix(NA,qc_begins[[i]],ncol(dframe_tmp)) %>% data.frame()
     colnames(dummyframe) <- colnames(dframe_tmp)

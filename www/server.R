@@ -148,10 +148,10 @@ shinyServer(function(input,output){
   # All default to last position on the second plate
   output$qc_poschars <- renderUI({
     if(input$sample_position_type == "well"){
-      qc_def <- "P2-H12"
+      qc_def <- paste0("P", input$n_plates, "-H12")
     }
     else{
-      qc_def <- "P2-F9"
+      qc_def <- paste0("P", input$n_plates, "-F9")
     }
     tagList(
       fluidRow(
@@ -252,7 +252,7 @@ shinyServer(function(input,output){
     if (!is.null(sample_warnings()) & sample_warnings() != ""){
       return(NULL)
     }
-    modify_sample(sample_dframe(),input$project_title, input$project_code, input$folder, as.numeric(input$qc_int),input$modes, qc_begins(),
+    modify_sample(sample_dframe(), input$project_title, input$project_code, input$folder, as.numeric(input$n_plates), as.numeric(input$qc_int), input$modes, qc_begins(),
                   input$sample_order, input$grouping_column_choice, input$sample_position_type, qc_pos_chars(), input$second_column_choice)
   })
   
