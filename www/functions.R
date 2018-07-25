@@ -24,39 +24,6 @@ warnings_sample <- function(dframe){
   return(msg)
 }
 
-# Warnings related to the metadata sheet
-warnings_meta <- function(sample_dframe,meta_dframe){
-  msg <- ""
-  
-  if( colnames(meta_dframe)[1] %>% toupper() != "VARIABLE"){
-    msg <- paste(msg,"- The first column should be named \"VARIABLE\"",sep = "<br/>")
-  }
-  
-  if( colnames(meta_dframe)[2] %>% toupper() != "DESCRIPTION"){
-    msg <- paste(msg,"- The second column should be named \"DESCRIPTION\"",sep = "<br/>")
-  }
-  
-  # Check that all the variables described are in column names of sample information file, not case sensitive
-  condition <- toupper(meta_dframe$VARIABLE) %in% toupper(colnames(sample_dframe)) %>% all()
-  if(!condition){
-    msg <- paste(msg,"- All variables do not match the columns in sample information sheet!",sep = "<br/>")
-  }
-  extra_vars <- sample_dframe %>% colnames() %>% dplyr::setdiff(c("SAMPLE_ID,SUBJECT_ID,GROUP,TIME"))
-  condition2 <- toupper(extra_vars) %in% toupper(meta_dframe$VARIABLE) %>% all()
-  if(!condition2){
-    msg <- paste(msg,"- Some extra variables lack description",sep="<br/>")
-  }
-  msg
-}
-
-# Get the number of variables and the number of variables which have description
-info_variables <- function(sample_dframe,meta_dframe){
-  msg <- paste("Found",as.character(ncol(sample_dframe)),"variables")
-  described <- toupper(colnames(sample_dframe)) %in% toupper(meta_dframe$VARIABLE) %>% sum()
-  msg <- paste(msg,"of which",as.character(described),"have description")
-  msg
-}
-
 # Counts the number of groups and/or timepoints
 count_group_time <- function(dframe){
   colnames(dframe) <- colnames(dframe) %>% toupper()
@@ -240,7 +207,7 @@ generate_sample_positions <- function(n, n_plates, position_type, qc_pos_char, a
 #     qc_pos_chars: character vector of the QC sample positions for all the modes
 #     second_column: character, name of the second column
 modify_sample <- function(dframe, project_title, project_code, folder, n_plates, qc_int, modes,
-                          qc_begins, sample_order, grouping_column, position_type, qc_pos_chars, second_column){
+                          qc_begins, sample_order, grouping_column, include_subject_id, subject_id_column, position_type, qc_pos_chars, second_column){
   
   # set factor columns to character
   classes <- lapply(dframe, class) %>% unlist() %>% unname()
@@ -255,12 +222,30 @@ modify_sample <- function(dframe, project_title, project_code, folder, n_plates,
   n <- nrow(dframe)
   set.seed( project_title %>% charToRaw() %>% as.numeric() %>% sum())
   if(sample_order == "random_global"){
-    dframe_ord <- dframe[sample(n),]
+    # If subject id is included, randomize the subject IDs and run all the sampels of one subject in a sequence
+    if(include_subject_id){
+      subject_order <- sample(unique(dframe[,subject_id_column]))
+      dframe[subject_id_column] <- factor(as.character(dframe[,subject_id_column]), levels = subject_order)
+      dframe_ord <- dframe %>%
+        group_by_(subject_id_column) %>%
+        sample_frac(1)
+    } else { # Completely randomize the data frame
+      dframe_ord <- dframe[sample(n),]
+    }
   }
-  else if(sample_order == "random_group"){
-    dframe_ord <- dframe %>%
-      group_by_(grouping_column) %>%
-      sample_frac(1)
+  else if(sample_order == "random_group") {
+    # Randomize subjects inside every group, run all the sample of one sunject in a sequence
+    if(include_subject_id){
+      subject_order <- sample(unique(dframe[,subject_id_column]))
+      dframe[subject_id_column] <- factor(as.character(dframe[,subject_id_column]), levels = subject_order)
+      dframe_ord <- dframe %>%
+        group_by_(grouping_column, subject_id_column) %>%
+        sample_frac(1)
+    } else { # Randomize completely inside one group
+      dframe_ord <- dframe %>%
+        group_by_(grouping_column) %>%
+        sample_frac(1)
+    }
   }
   else if(sample_order == "original"){
     dframe_ord <- dframe

@@ -98,34 +98,6 @@ shinyServer(function(input,output){
     read.xlsx(input$sample_input$datapath, sheet = 2)
   })
   
-  # Check that metadata sheet matches the required format and that the variables described
-  # are found in the sample information file
-  output$meta_warnings <- renderUI({
-    if(is.null(sample_dframe())){
-      return(NULL)
-    }
-    meta_title <- p("Variable metadata information:")
-    if(names(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
-      return(tagList(meta_title,
-                     p("No variable metadata sheet found",style="color:red;")))
-    }
-    warnings <- warnings_meta(sample_dframe(),sample_meta_dframe())
-    if(warnings == ""){
-      return(tagList(meta_title,
-                     p("Variable metadata sheet OK")))
-    }
-    tagList(meta_title,
-            p(HTML(warnings),style="color:red;"))
-  })
-  
-  # Outputs the number of variables and number of descriptions
-  output$variables <- renderText({
-    if(is.null(sample_dframe()) | is.null(sample_meta_dframe())){
-      return(NULL)
-    }
-    info_variables(sample_dframe(),sample_meta_dframe())
-  })
-  
   # Project home folder input
   # defaults to "D:\\MassHunter\\Data\\[project_title]"
   output$destination <- renderUI({
@@ -139,8 +111,17 @@ shinyServer(function(input,output){
     }
   })
   
-  output$grouping_column <- renderUI({
-    selectInput("grouping_column_choice","Column containing groups for randomization",
+  output$subject_id_column_choice <- renderUI({
+    tagList(
+      checkboxInput("include_subject_id", "Run samples from same subject in a sequence"),
+      conditionalPanel(condition = "input.include_subject_id",
+                       selectInput("subject_id_column","Subject ID column",
+                                   choices = colnames(sample_dframe())))
+    )
+  })
+  
+  output$grouping_column_choice <- renderUI({
+    selectInput("grouping_column","Column containing groups for randomization",
                 choices = colnames(sample_dframe()))
   })
   
@@ -253,7 +234,8 @@ shinyServer(function(input,output){
       return(NULL)
     }
     modify_sample(sample_dframe(), input$project_title, input$project_code, input$folder, as.numeric(input$n_plates), as.numeric(input$qc_int), input$modes, qc_begins(),
-                  input$sample_order, input$grouping_column_choice, input$sample_position_type, qc_pos_chars(), input$second_column_choice)
+                  input$sample_order, input$grouping_column, input$include_subject_id, input$subject_id_column,
+                  input$sample_position_type, qc_pos_chars(), input$second_column_choice)
   })
   
   # Separate the worklist files
