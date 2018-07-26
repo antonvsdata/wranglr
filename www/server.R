@@ -113,7 +113,7 @@ shinyServer(function(input,output){
   
   output$subject_id_column_choice <- renderUI({
     tagList(
-      checkboxInput("include_subject_id", "Run samples from same subject in a sequence"),
+      checkboxInput("include_subject_id", "Run samples from same subject sequently"),
       conditionalPanel(condition = "input.include_subject_id",
                        selectInput("subject_id_column","Subject ID column",
                                    choices = colnames(sample_dframe())))
@@ -129,29 +129,29 @@ shinyServer(function(input,output){
   # All default to last position on the second plate
   output$qc_poschars <- renderUI({
     if(input$sample_position_type == "well"){
-      qc_def <- paste0("P", input$n_plates, "-H12")
+      qc_defs <- paste0(paste0("P", input$n_plates, "-H"), (13-length(input$modes)):12)
+    } else {
+      qc_defs <- paste0(paste0("P", input$n_plates, "-F"), (10-length(input$modes)):9)
     }
-    else{
-      qc_def <- paste0("P", input$n_plates, "-F9")
-    }
+    names(qc_defs) <- input$modes
     tagList(
       fluidRow(
         conditionalPanel(condition = "input.modes.includes('HILIC_neg')",
                          column(3,
                                 textInput("qc_poschar_hilicneg","HILIC neg",
-                                          value = qc_def))),
+                                          value = qc_defs["HILIC_neg"]))),
         conditionalPanel(condition = "input.modes.includes('HILIC_pos')",
                          column(3,
                                 textInput("qc_poschar_hilicpos","HILIC pos",
-                                          value = qc_def))),
+                                          value = qc_defs["HILIC_pos"]))),
         conditionalPanel(condition = "input.modes.includes('RP_neg')",
                          column(3,
                                 textInput("qc_poschar_rpneg","RP neg",
-                                          value = qc_def))),
+                                          value = qc_defs["RP_neg"]))),
         conditionalPanel(condition = "input.modes.includes('RP_pos')",
                          column(3,
                                 textInput("qc_poschar_rppos","RP pos",
-                                          value = qc_def)))
+                                          value = qc_defs["RP_pos"])))
       )
     )
   })
