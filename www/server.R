@@ -275,6 +275,7 @@ shinyServer(function(input,output){
       return(p("Only alphanumeric characters allowed in project title (no umlauts)",style = "color:red;"))
     }
     return(tagList(
+      uiOutput("randomize_columns_warnings"),
       h4("Preview:"),
       radioButtons("table_choice",NULL,
                    choices = c("Processed sample information file for MPP" = "MPP","Worklist file" = "worklist")),
@@ -288,6 +289,52 @@ shinyServer(function(input,output){
                uiOutput("worklist_downloads"))
       )
     ))
+  })
+  
+  sample_warnings <- reactive({
+    if (is.null(sample_dframe())){
+      return(NULL)
+    }
+    warnings <- warnings_sample(sample_dframe())
+    return(warnings)
+  })
+  
+  # Ouput possible warnings about the sample information sheet
+  output$sample_warnings <- renderUI({
+    if (is.null(sample_warnings())){
+      return(NULL)
+    }
+    if(sample_warnings() == ""){
+      return(p("Sample information sheet OK"))
+    }
+    paste("<p style=\"color: red;\">",sample_warnings(),"</p>",sep="") %>% HTML()
+  })
+  
+  randomize_column_warning_msg <- eventReactive(input$modify_sample, {
+    if (is.null(sample_dframe()) | (input$sample_order %in% c("original", "random_global") & !input$include_subject_id)){
+      return(NULL)
+    }
+    msg <- ""
+    if (input$sample_order == "random_group"){
+      if (sum(is.na(sample_dframe()[input$grouping_column])) > 0) {
+        msg <- paste(msg, "Warning: Group column contains NAs")
+      }
+    }
+    if(input$include_subject_id){
+      if (sum(is.na(sample_dframe()[input$subject_id_column])) > 0) {
+        if(msg != ""){
+          msg <- paste0(msg, "<br/>")
+        }
+        msg <- paste(msg, "Warning: Subject ID column contains NAs")
+      }
+    }
+    return(msg)
+  })
+  
+  # Check whether the grouping and/or subject ID columns contain NAs
+  output$randomize_columns_warnings <-renderUI({
+    msg <- randomize_column_warning_msg()
+    paste("<p style=\"color: red;\">",msg,"</p>",sep="") %>% HTML()
   })
   
   # dataTableOutput of either MPP file or the worklist file
