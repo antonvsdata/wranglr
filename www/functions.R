@@ -39,6 +39,23 @@ count_group_time <- function(dframe){
   msg
 }
 
+get_default_project_code <- function(project_title){
+  saved_codes <- read.csv("project_codes.csv")
+  
+  if(project_title %in% saved_codes$Project){ # Use existing code
+    index <- which(saved_codes$Project == project_title)
+    project_code <- saved_codes$Code[index]
+  }
+  else{ # Generate new code
+    # Generate the possible choices for the code, first capital letters, then combinations of two capital letters
+    two_letter_df <- expand.grid(LETTERS, LETTERS, stringsAsFactors = FALSE) %>% unite("Code", Var2, Var1, sep = "")
+    choices <- c(LETTERS, two_letter_df$Code)
+    # Pick the first possible code not already included in the saved project codes
+    project_code <- choices[min(which(!choices %in% saved_codes$Code))]
+  }
+  project_code
+}
+
 # Generates datafile labels
 # INPUT:
 #       - folder: character
@@ -190,6 +207,16 @@ generate_sample_positions <- function(n, n_plates, position_type, qc_pos_char, a
   positions
 }
 
+save_project_code <- function(project_title, project_code){
+  saved_codes <- read.csv("project_codes.csv")
+  
+  if(!project_title %in% saved_codes$Project){ # Use existing code
+    newrow <- data.frame(Project = project_title, Code = project_code)
+    write.table(newrow,"project_codes.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
+  }
+  write.table(newrow,"project_log.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
+}
+
 # Randomize the samples, add QC and generate internal ID
 # Generate worklist files with AutoMSMS and STOP
 # INPUT:
@@ -208,6 +235,8 @@ generate_sample_positions <- function(n, n_plates, position_type, qc_pos_char, a
 #     second_column: character, name of the second column
 modify_sample <- function(dframe, project_title, project_code, folder, n_plates, qc_int, modes,
                           qc_begins, sample_order, grouping_column, include_subject_id, subject_id_column, position_type, qc_pos_chars, second_column){
+  # Save project title and code
+  save_project_code(project_title, project_code)
   
   # set factor columns to character
   classes <- lapply(dframe, class) %>% unlist() %>% unname()

@@ -83,19 +83,17 @@ shinyServer(function(input,output){
     out_text %>% HTML()
   })
   
-  # Read the metadata sheet from sample info file
-  sample_meta_dframe <- reactive({
-    if(is.null(input$sample_input)){
-      return(NULL)
+  default_project_code <- reactive({
+    if(input$project_title != ""){
+      default <- get_default_project_code(input$project_title)
+    } else{
+      default <- ""
     }
-    datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
-    if(class(datafile)=="try-error"){
-      return(NULL)
-    }
-    if (names(loadWorkbook(input$sample_input$datapath)) %>% length() < 2){
-      return(NULL)
-    }
-    read.xlsx(input$sample_input$datapath, sheet = 2)
+    default
+  })
+  
+  output$project_code <- renderUI({
+    textInput("project_code","Project code", value = default_project_code())
   })
   
   # Project home folder input
