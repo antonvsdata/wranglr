@@ -5,8 +5,8 @@ navbarPage("Wranglr",
   tabPanel("Sample information file",
            includeCSS("style.css"),
            
-           h4("Wranglr just received an update! Please read more about the changes from the instructions", style="color:red;"),
-           h4("If you find any bugs or if something is unclear, please contact antom at uef dot fi!", style="color:red;"),
+           h4("Wranglr just received an update! Please read more about the changes from the instructions!", style="color:#16A085;"),
+           h4("If you find any bugs or if something is unclear, please contact antom at uef dot fi!", style="color:#16A085;"),
            
            #h4("Wranglr is being updated and tested, if you need to run something urgently (today), please contact antom at uef dot fi!", style="color:red;"),
            br(),
@@ -122,7 +122,9 @@ navbarPage("Wranglr",
            downloadButton("sample_specs"),
            br(),
            br(),
-           h4(capture.output(sessionInfo())[1]),
-           h4("Installed packages:"),
+           br(),
+           h4("For developers:"),
+           h5(capture.output(sessionInfo())[1]),
+           h5("Installed packages:"),
            downloadButton("packages"))
 ))
