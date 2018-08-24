@@ -2,6 +2,7 @@ library(openxlsx)
 library(bbd)
 library(dplyr)
 library(stringr)
+library(tidyr)
 
 source("functions.R")
 
@@ -231,7 +232,7 @@ shinyServer(function(input,output){
     if (!is.null(sample_warnings()) & sample_warnings() != ""){
       return(NULL)
     }
-    modify_sample(sample_dframe(), input$project_title, input$project_code, input$folder, as.numeric(input$n_plates), as.numeric(input$qc_int), input$modes, qc_begins(),
+    modify_sample(sample_dframe(), input$project_title, input$project_code, input$save_code, input$folder, as.numeric(input$n_plates), as.numeric(input$qc_int), input$modes, qc_begins(),
                   input$sample_order, input$grouping_column, input$include_subject_id, input$subject_id_column,
                   input$sample_position_type, qc_pos_chars(), input$second_column_choice)
   })
@@ -616,6 +617,14 @@ shinyServer(function(input,output){
     
     content = function(file){
       file.copy("sample_form_specification.pdf",file)
+    }
+  )
+  
+  output$packages <- downloadHandler(
+    filename = "installed_packages.csv",
+    
+    content = function(file){
+      write.csv(installed.packages(), file,  na = "", row.names = FALSE, eol = "\r\n")
     }
   )
 })

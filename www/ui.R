@@ -7,6 +7,8 @@ navbarPage("Wranglr",
            
            h4("Wranglr just received an update! Please read more about the changes from the instructions", style="color:red;"),
            h4("If you find any bugs or if something is unclear, please contact antom at uef dot fi!", style="color:red;"),
+           
+           #h4("Wranglr is being updated and tested, if you need to run something urgently (today), please contact antom at uef dot fi!", style="color:red;"),
            br(),
            h4("Validate sample information file:"),
            br(),
@@ -25,6 +27,7 @@ navbarPage("Wranglr",
            h4("Randomize and add QC"),
            textInput("project_title","Project title:"),
            uiOutput("project_code"),
+           checkboxInput("save_code", "Save project code"),
            uiOutput("destination"),
            selectInput("sample_order","Sample run order",
                        choices = c("Original" = "original",
@@ -116,5 +119,10 @@ navbarPage("Wranglr",
            h4("Download Wranglr instructions"),
            downloadButton("instructions"),
            h4("Download sample information sheet specifications"),
-           downloadButton("sample_specs"))
+           downloadButton("sample_specs"),
+           br(),
+           br(),
+           h4(capture.output(sessionInfo())[1]),
+           h4("Installed packages:"),
+           downloadButton("packages"))
 ))

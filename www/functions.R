@@ -207,11 +207,11 @@ generate_sample_positions <- function(n, n_plates, position_type, qc_pos_char, a
   positions
 }
 
-save_project_code <- function(project_title, project_code){
+save_project_code <- function(project_title, project_code, save_code){
   saved_codes <- read.csv("project_codes.csv")
   
-  if(!project_title %in% saved_codes$Project){ # Use existing code
-    newrow <- data.frame(Project = project_title, Code = project_code)
+  newrow <- data.frame(Project = project_title, Code = project_code)
+  if(save_code & !project_title %in% saved_codes$Project){ # Use existing code
     write.table(newrow,"project_codes.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
   }
   write.table(newrow,"project_log.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
@@ -233,10 +233,10 @@ save_project_code <- function(project_title, project_code){
 #     position_type: the type of plate to use, "vial" for 54-vial plate or "well" for 96-well plate
 #     qc_pos_chars: character vector of the QC sample positions for all the modes
 #     second_column: character, name of the second column
-modify_sample <- function(dframe, project_title, project_code, folder, n_plates, qc_int, modes,
+modify_sample <- function(dframe, project_title, project_code, save_code, folder, n_plates, qc_int, modes,
                           qc_begins, sample_order, grouping_column, include_subject_id, subject_id_column, position_type, qc_pos_chars, second_column){
   # Save project title and code
-  save_project_code(project_title, project_code)
+  save_project_code(project_title, project_code, save_code)
   
   # set factor columns to character
   classes <- lapply(dframe, class) %>% unlist() %>% unname()
@@ -258,8 +258,9 @@ modify_sample <- function(dframe, project_title, project_code, folder, n_plates,
       dframe_ord <- dframe %>%
         group_by_(subject_id_column) %>%
         sample_frac(1) %>%
-        ungroup()
-      dframe_ord[,subject_id_column] <- as.character(dframe_ord[, subject_id_column, drop = TRUE])
+        ungroup() %>%
+        as.data.frame()
+      dframe_ord[subject_id_column] <- as.character(dframe_ord[,subject_id_column])
     } else { # Completely randomize the data frame
       dframe_ord <- dframe[sample(n),]
     }
@@ -271,12 +272,14 @@ modify_sample <- function(dframe, project_title, project_code, folder, n_plates,
       dframe_ord <- dframe %>%
         group_by_(grouping_column, subject_id_column) %>%
         sample_frac(1) %>%
-        ungroup()
-      dframe_ord[,subject_id_column] <- as.character(dframe_ord[, subject_id_column, drop = TRUE])
+        ungroup() %>%
+        as.data.frame()
+      dframe_ord[subject_id_column] <- as.character(dframe_ord[,subject_id_column])
     } else { # Randomize completely inside one group
       dframe_ord <- dframe %>%
         group_by_(grouping_column) %>%
-        sample_frac(1)
+        sample_frac(1) %>%
+        as.data.frame()
     }
   } else if(sample_order == "original"){
     dframe_ord <- dframe
@@ -353,7 +356,7 @@ modify_sample <- function(dframe, project_title, project_code, folder, n_plates,
   # Separate dframe_big into MPP and worklist tables
   dframe_MPP <- dframe_big %>% dplyr::select(-DATAFILE_LONG,-SAMPLE_POSITION)
   dframe_worklist <- dframe_big %>% dplyr::select(INTERNAL_SAMPLE_ID,SAMPLE_POSITION,DATAFILE_LONG)
-  
+
   return(list(MPP = dframe_MPP,worklist = dframe_worklist))
 }
 
