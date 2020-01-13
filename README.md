@@ -27,6 +27,8 @@ Wranglr also produces modified sample information files that are compatible with
 
 #### How can I try Wranglr?
 
+**NOTE:** The current version of Wranglr is incompatible with newer versions of Shiny. This will hopefully get fixed soon!
+
 Even though Wranglr is a web app, you can run it locally from your machine if you install all the required packages (will be updated later). To download Wranglr, run the command:
 
 ```
