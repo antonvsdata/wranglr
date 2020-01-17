@@ -1,6 +1,6 @@
 ## Wranglr
 
-Wragnlr is a Shiny web app that automates creation of worklist files for liquid chromatography-mass spectrometry (LC-MS) experiments. Wranglr was developed in University of Eastern Finland (UEF), mainly for the purposes of the research group of nutritional metabolomics. The online version of Wranglr is maintained by the Bioinformatics Centre of UEF.
+Wranglr is a Shiny web app that automates creation of worklist files for liquid chromatography-mass spectrometry (LC-MS) experiments. Wranglr was developed in University of Eastern Finland (UEF), mainly for the purposes of the research group of nutritional metabolomics. The online version of Wranglr is maintained by the Bioinformatics Centre of UEF.
 
 **NOTE:** the online version of Wranglr is only meant for internal use at UEF, but the source code of Wranglr is available for anyone to use. 
 
