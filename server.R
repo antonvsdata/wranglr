@@ -407,7 +407,7 @@ shinyServer(function(input,output){
     filename = "Wranglr_instructions.pdf",
     
     content = function(file){
-      file.copy("Wranglr_instructions.pdf",file)
+      file.copy("www/Wranglr_instructions.pdf",file)
     }
   )
   
@@ -415,7 +415,23 @@ shinyServer(function(input,output){
     filename = "sample_form_specification.pdf",
     
     content = function(file){
-      file.copy("sample_form_specification.pdf",file)
+      file.copy("www/sample_form_specification.pdf",file)
+    }
+  )
+  
+  output$sample_info <- downloadHandler(
+    filename = "sample_info.xlsx",
+    
+    content = function(file){
+      file.copy("www/sample_info.xlsx",file)
+    }
+  )
+  
+  output$repeated_measurements <- downloadHandler(
+    filename = "repeated_measurements.xlsx",
+    
+    content = function(file){
+      file.copy("www/repeated_measurements.xlsx",file)
     }
   )
   
