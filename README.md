@@ -23,7 +23,6 @@ Creating the worklists manually (e.g. in Excel) is both time-consuming and error
 - Adding quality control (QC) samples
 - Assigning samples for AutoMSMS
 
-Wranglr also produces modified sample information files that are compatible with Agilent Mass Profiler Professional (MPP), and processes output files of MPP. These features are however currently not maintained as our research group no longer uses MPP. 
 
 #### How can I try Wranglr?
 

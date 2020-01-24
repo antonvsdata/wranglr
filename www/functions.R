@@ -234,7 +234,8 @@ save_project_code <- function(project_title, project_code, save_code){
 #     qc_pos_chars: character vector of the QC sample positions for all the modes
 #     second_column: character, name of the second column
 modify_sample <- function(dframe, project_title, project_code, save_code, folder, n_plates, qc_int, modes,
-                          qc_begins, sample_order, grouping_column, include_subject_id, subject_id_column, position_type, qc_pos_chars, second_column){
+                          qc_begins, sample_order, grouping_column, include_subject_id, subject_id_column,
+                          position_type, qc_pos_chars){
   # Save project title and code
   save_project_code(project_title, project_code, save_code)
   
@@ -350,14 +351,12 @@ modify_sample <- function(dframe, project_title, project_code, save_code, folder
   dframe_big$DATAFILE_LONG <-datafile_labels$long
   
   dframe_big <- dframe_big %>% dplyr::select(DATAFILE,RUN_ORDER,INTERNAL_SAMPLE_ID,SAMPLE_ID,QC,everything())
-  index <- which(colnames(dframe_big) == second_column)
-  dframe_big <- cbind(dframe_big[,c(1,index)],dframe_big[,-c(1,index)])
   
-  # Separate dframe_big into MPP and worklist tables
-  dframe_MPP <- dframe_big %>% dplyr::select(-DATAFILE_LONG,-SAMPLE_POSITION)
+  # Separate dframe_big into modified sample information and worklist tables
+  dframe_samples <- dframe_big %>% dplyr::select(-DATAFILE_LONG,-SAMPLE_POSITION)
   dframe_worklist <- dframe_big %>% dplyr::select(INTERNAL_SAMPLE_ID,SAMPLE_POSITION,DATAFILE_LONG)
 
-  return(list(MPP = dframe_MPP,worklist = dframe_worklist))
+  return(list(samples = dframe_samples, worklist = dframe_worklist))
 }
 
 # Add AutoMSMS runs and METHOD column to worklist table
@@ -436,160 +435,3 @@ separate_worklists <- function(dframe, modes, msms_qc, msms_sample_ids){
   separated
 }
 
-# ----- MPP tab --------
-
-# Create warnings based on processes sample info file
-warnings_sample_processed <- function(dframe){
-  msg <- ""
-  incProgress(amount = 0.5, message = "Checking file")
-  if(!"INTERNAL_SAMPLE_ID" %in% colnames(dframe)){
-    msg <- "INTERNAL_SAMPLE_ID column missing"
-  }
-  if(!"DATAFILE" %in% colnames(dframe)){
-    msg <- paste(msg,"DATAFILE column missing",sep = "<br/>")
-  }
-
-  return(msg)
-}
-
-# Count non-QC and QC samples in processes sample info file
-get_sample_counts <- function(dframe){
-  incProgress(amount = 0.2, message = "Counting samples")
-  orig_n <- dframe %>% dplyr::filter(!QC) %>% nrow()
-  qc_n <- dframe %>% dplyr::filter(QC) %>% nrow()
-  msg <- paste("Sample information file OK",paste("Found",orig_n,"original samples and",qc_n,"QC samples"),sep="<br/>")
-}
-
-# Load data from MPP file
-load_metabo_data <- function(file, scan.lines=20) {
-  
-  # Skip comment lines starting with #
-  tmp.data <- scan(file=file, what="character", nlines=scan.lines, sep="\n", quiet = T)
-  index <- grep("^#", tmp.data)
-  rm(tmp.data)
-  if (length(index) > 0) {
-    skip.lines <- max(index)
-  } else {
-    skip.lines <- 0
-  }
-  
-  if (skip.lines >= scan.lines) {
-    stop("Found only header lines.")
-  }
-  
-  data <- read.table(file, header=TRUE, skip=skip.lines, sep = "\t")
-  data
-  
-}
-
-# Extract metabolite compound raw data from the full raw data set
-extract_compound_data <- function(data, analysis_mode,sample_dframe) {
-  index <- which(colnames(data) == "Compound")
-  index <- c(index, grep(".raw.$", colnames(data)))
-  
-  compound.data <- data[,index]
-  
-  # Clean sample names
-  colnames(compound.data) <- gsub(".raw.$", "", colnames(compound.data))
-  
-  # Clean metabolite names
-  compound.data$Compound <- gsub("@", "a", compound.data$Compound)
-  
-  # Replace any non-alphanumeric characters with _
-  compound.data$Compound <- gsub("[^[:alnum:]]+", "_", compound.data$Compound)
-  #compound.data$Compound <- gsub(" ", "_", compound.data$Compound)
-  #compound.data$Compound <- gsub("[:punct:]", "_", compound.data$Compound)
-  compound.data$Compound <- paste("COMPOUND", compound.data$Compound, analysis_mode, sep="_")
-  
-  # Transpose data
-  compound.data.t <- t(compound.data[,-1])
-  colnames(compound.data.t) <- compound.data$Compound
-  
-  # Add DATAFILE column
-  # Match INTERNAL_SAMPLE_ID
-  result.df <- cbind(data.frame(DATAFILE=rownames(compound.data.t)), compound.data.t)
-  tmp <- sample_dframe %>% select(DATAFILE, INTERNAL_SAMPLE_ID)
-  if(!all(result.df$DATAFILE %in% tmp$DATAFILE)){
-    stop(paste("Datafiles in MPP file",analysis_mode,"not found in sample information file"))
-  }
-  result.df$DATAFILE <- as.character(result.df$DATAFILE)
-  tmp$DATAFILE <- as.character(tmp$DATAFILE)
-  result.df <- left_join(result.df,tmp, by = "DATAFILE") %>% select(INTERNAL_SAMPLE_ID,everything(),-DATAFILE)
-  
-  result.df
-}
-
-# Extract annotations from the full raw data set
-extract_annotations <- function(data){
-  index <- which(colnames(data) == "Compound")
-  index <- c(index, grep(".raw.$", colnames(data)))
-  as.data.frame(data[,-index])
-}
-
-# Combine abundance values into one data matrix
-# Split the information output of MPP into two files:
-# INPUT:
-#     mpp_files: named list of the uploaded MPP tables, names = modes
-#     modes: character vector of the modes run
-#     sample_dframe: data frame read from processes sample info file
-# OUTPUT: list
-#     - abundance data matrix
-#     - annotation data frame with the other columns
-combine_mpp <- function(mpp_files,modes,sample_dframe){
-  
-  if(length(mpp_files) > 1){
-    for(i in 2:length(mpp_files)){
-      if(ncol(mpp_files[[i-1]]) != ncol(mpp_files[[i]])){
-        stop("MPP files have different amount of datafiles")
-      }
-    }
-  }
-  
-  
-  # Clean compound names, add analysis mode in the end
-  data_matrices <- as.list(rep(NA,length(mpp_files)))
-  annotations <- data.frame()
-  for (i in 1:length(mpp_files)){
-    if(i ==1){
-      incProgress(0.125,message = paste("Processing",modes[i],"file"))
-    }
-    else{
-      incProgress(0.1,message = paste("Processing",modes[i],"file"))
-    }
-    data_matrices[[i]] <- extract_compound_data(mpp_files[[i]],modes[i],sample_dframe)
-    annotations_tmp <- mpp_files[[i]] %>% select(Compound,Mass,Retention.Time,CompositeSpectrum,Frequency,CompoundAlgo,Ionization.mode)
-    annotations_tmp$Compound <- gsub("@", "a", annotations_tmp$Compound)
-    annotations_tmp$Compound <- gsub("[^[:alnum:]]+", "_", annotations_tmp$Compound)
-    annotations_tmp$Compound <- paste("COMPOUND", annotations_tmp$Compound, modes[i], sep="_")
-    annotations <- rbind(annotations,annotations_tmp)
-  }
-  incProgress(0.1,message = "Combining files")
-  
-  data_matrix_joined <- data_matrices[[1]]
-  if(length(mpp_files) > 1){
-    for(i in 2:length(data_matrices)){
-      data_matrix_joined <- left_join(data_matrix_joined,data_matrices[[i]], by = "INTERNAL_SAMPLE_ID")
-    }
-  }
-  sample_dframe <- sample_dframe %>% select(-DATAFILE) %>% distinct()
-  data_matrix_joined <- right_join(sample_dframe,data_matrix_joined,by="INTERNAL_SAMPLE_ID")
-  
-  # Create chromatography column
-  chromatography <- c()
-  if("HILIC_neg" %in% modes){
-    chromatography <- c(chromatography,rep("hilic", nrow(mpp_files$hilic_neg)))
-  }
-  if("HILIC_pos" %in% modes){
-    chromatography <- c(chromatography,rep("hilic", nrow(mpp_files$hilic_pos)))
-  }
-  if("RP_neg" %in% modes){
-    chromatography <- c(chromatography,rep("rp", nrow(mpp_files$rp_neg)))
-  }
-  if("RP_pos" %in% modes){
-    chromatography <- c(chromatography,rep("rp", nrow(mpp_files$rp_pos)))
-  }
-  annotations$Chromatography <- chromatography
-  
-  
-  return(list(annotations = annotations,data_matrix = data_matrix_joined))
-}
