@@ -1,1 +1,6 @@
 packrat/lib*/
+.Rhistory
+.Rproj.user/
+packrat/src/
+testdata/
+www/project_log.csv
