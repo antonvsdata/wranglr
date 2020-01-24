@@ -339,20 +339,20 @@ shinyServer(function(input,output){
   # dataTableOutput of either MPP file or the worklist file
   output$sample_mod_table <- renderUI({
     if(input$table_choice == "MPP"){
-      dataTableOutput("sample_mod")
+      tableOutput("sample_mod")
     }
     else{
-      dataTableOutput("sample_mod_worklist")
+      tableOutput("sample_mod_worklist")
     }
   })
   
   # First worklist file
-  output$sample_mod_worklist <- renderDataTable({
+  output$sample_mod_worklist <- renderTable({
     separated_worklist()[[1]]
   })
   
   # MPP file
-  output$sample_mod <- renderDataTable({
+  output$sample_mod <- renderTable({
     sample_modified()$MPP
   })
   
