@@ -54,7 +54,7 @@ count_group_time <- function(dframe){
 }
 
 get_default_project_code <- function(project_title){
-  saved_codes <- read.csv("project_codes.csv")
+  saved_codes <- read.csv("www/project_codes.csv")
   
   if(project_title %in% saved_codes$Project){ # Use existing code
     index <- which(saved_codes$Project == project_title)
@@ -222,13 +222,13 @@ generate_sample_positions <- function(n, n_plates, position_type, qc_pos_char, a
 }
 
 save_project_code <- function(project_title, project_code, save_code){
-  saved_codes <- read.csv("project_codes.csv")
+  saved_codes <- read.csv("www/project_codes.csv")
   
   newrow <- data.frame(Project = project_title, Code = project_code)
   if(save_code & !project_title %in% saved_codes$Project){ # Use existing code
-    write.table(newrow,"project_codes.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
+    write.table(newrow,"www/project_codes.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
   }
-  write.table(newrow,"project_log.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
+  write.table(newrow,"www/project_log.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
 }
 
 # Randomize the samples, add QC and generate internal ID
