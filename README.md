@@ -34,6 +34,6 @@ Even though Wranglr is a web app, you can run it locally from your machine if yo
 ```git clone https://github.com/antonvsdata/wranglr```
 2. Open the Wranglr.Rproj file in RStudio (or start R in the Wranglr repository if you're not using RStudio)
 3. If you don't have packrat installed, it should be installed automatically. If this does not happen for some reason, install it manually ```install.packages("packrat")```. And the run ```packrat::on()```
-4. To restore the packages used to create Wranglr, run ```packrat::restiore()```. This will install all the required packages. Note that this might take a while.
+4. To restore the packages used to create Wranglr, run ```packrat::restore()```. This will install all the required packages. Note that this might take a while.
 5. To run the application, open either ui.R or server.R file in RStudio and click "Run App" in the top panel.
 6. You can now test the app with the files found in testdata. See the instructions provided in ```www/Wranglr_instructions.pdf```
