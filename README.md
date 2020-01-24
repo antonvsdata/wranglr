@@ -28,10 +28,11 @@ Creating the worklists manually (e.g. in Excel) is both time-consuming and error
 
 **NOTE:** The current version of Wranglr is incompatible with newer versions of Shiny. This will hopefully get fixed soon!
 
-Even though Wranglr is a web app, you can run it locally from your machine if you install all the required packages (will be updated later). To download Wranglr, run the command:
+Even though Wranglr is a web app, you can run it locally from your machine if you install all the required packages. Wranglr is a packrat project. [Packrat](https://rstudio.github.io/packrat/) is a package management tool for R, that allows you to create a local library for R packages for this project only. It also allows you to install the same package versions that were used to construct Wranglr. So, to try Wranlgr out locally, you can follow these steps:
 
-```
-git clone https://github.com/antonvsdata/wranglr
-```
-
-Then, install all the dependencies, open either ui.R or server.R file in RStudio and click "Run App" in the top panel. You can test the app with the files found in testdata
+1. Download the git repository by running the following line in your terminal: ```git clone https://github.com/antonvsdata/wranglr```
+2. Open the Wranglr.Rproj file in RStudio (or start R in the Wranglr repository if you're not using RStudio)
+3. If you don't have packrat installed, it should be installed automatically. If this does not happen for some reason, install it manually ```install.packages("packrat")```. And the run ```packrat::on()```
+4. To restore the packages used to create Wranglr, run ```packrat::restiore()```. This will install all the required packages. Note that this might take a while.
+5. To run the application, open either ui.R or server.R file in RStudio and click "Run App" in the top panel.
+6. You can now test the app with the files found in testdata. See the instructions provided in ```www/Wranglr_instructions.pdf```
