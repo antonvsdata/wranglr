@@ -28,21 +28,6 @@ Source: CRAN
 Version: 1.1.5
 Hash: 35ad64fcf2063e2a52031b0f1a59d8f0
 
-Package: bbd
-Source: github
-Version: 0.1.0
-Hash: edc2c62fa33df7b357d1975281f876ac
-Requires: foreach
-GithubRepo: bbd
-GithubUsername: juuussi
-GithubRef: master
-GithubSha1: 135b930537fd2238385c7f89205b04757cec2060
-RemoteHost: api.github.com
-RemoteRepo: bbd
-RemoteUsername: juuussi
-RemoteRef: master
-RemoteSha: 135b930537fd2238385c7f89205b04757cec2060
-
 Package: cli
 Source: CRAN
 Version: 1.1.0
@@ -77,6 +62,11 @@ Source: CRAN
 Version: 0.4.0
 Hash: f147621f72b561485bfffcae78c4f5d5
 
+Package: fastmap
+Source: CRAN
+Version: 1.0.1
+Hash: d272cd728e4095b3964181b44763f46c
+
 Package: foreach
 Source: CRAN
 Version: 1.4.7
@@ -88,10 +78,33 @@ Source: CRAN
 Version: 1.3.1
 Hash: 660bbbe3803c7cf7c9489a7d99a9c0ed
 
+Package: htmltools
+Source: CRAN
+Version: 0.4.0
+Hash: 3f49193aa22146296cee8ae091b6303a
+Requires: Rcpp, digest, rlang
+
+Package: httpuv
+Source: CRAN
+Version: 1.5.2
+Hash: bedc97351732877695aa0f20e32d6ad9
+Requires: BH, R6, Rcpp, later, promises
+
 Package: iterators
 Source: CRAN
 Version: 1.0.12
 Hash: f0b9003c5ffc99a96b9f21079c1715a5
+
+Package: jsonlite
+Source: CRAN
+Version: 1.6
+Hash: 5f969e213e966135393e3e304abf3f49
+
+Package: later
+Source: CRAN
+Version: 1.0.0
+Hash: 205ee1ecb9ea284441563fc014b45ece
+Requires: BH, Rcpp, rlang
 
 Package: lifecycle
 Source: CRAN
@@ -103,6 +116,11 @@ Package: magrittr
 Source: CRAN
 Version: 1.5
 Hash: bdc4d48c3135e8f3b399536ddf160df4
+
+Package: mime
+Source: CRAN
+Version: 0.8
+Hash: e4b20f5b8c6b3563adb7e914a52b6400
 
 Package: openxlsx
 Source: CRAN
@@ -131,6 +149,12 @@ Source: CRAN
 Version: 0.2.0
 Hash: 81a8008a5e7858552503935f1abe48aa
 
+Package: promises
+Source: CRAN
+Version: 1.1.0
+Hash: 0404586e7e8dff0de5fde4a65f37e39b
+Requires: R6, Rcpp, later, magrittr, rlang
+
 Package: purrr
 Source: CRAN
 Version: 0.3.2
@@ -141,6 +165,18 @@ Package: rlang
 Source: CRAN
 Version: 0.4.0
 Hash: eabda67321fe1d477ea641ddd5d84f00
+
+Package: shiny
+Source: CRAN
+Version: 1.4.0
+Hash: 7a1d8725849ecb792b4df2c084769c23
+Requires: R6, crayon, digest, fastmap, htmltools, httpuv, jsonlite,
+    later, mime, promises, rlang, sourcetools, xtable
+
+Package: sourcetools
+Source: CRAN
+Version: 0.1.7
+Hash: d093478ac90064e670cd4bf1a99b47b6
 
 Package: stringi
 Source: CRAN
@@ -182,6 +218,11 @@ Source: CRAN
 Version: 0.2.0
 Hash: daf77cb3dbcacd7fb619cb3748dc215f
 Requires: backports, digest, ellipsis, glue, rlang, zeallot
+
+Package: xtable
+Source: CRAN
+Version: 1.8-4
+Hash: dc0d47261b678d26032363bebd050540
 
 Package: zeallot
 Source: CRAN
