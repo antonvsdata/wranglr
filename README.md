@@ -8,7 +8,7 @@ Wranglr is a Shiny web app that automates creation of worklist files for liquid 
 
 Shiny is an R package developed by RStudio, that allows the user to create interactive web applications without knowledge of actual web development tools and languages. For more information, visit the [Shiny website](https://shiny.rstudio.com/). 
 
-#### What does Wranglr do exactly?
+### What does Wranglr do exactly?
 
 The software used to run LC-MS experiments requires so called worklist files.
 
@@ -24,11 +24,38 @@ Creating the worklists manually (e.g. in Excel) is both time-consuming and error
 - Assigning samples for AutoMSMS
 
 
-#### How can I try Wranglr?
+### How can I try Wranglr?
 
-**NOTE:** The current version of Wranglr is incompatible with newer versions of Shiny. This will hopefully get fixed soon!
+There are three ways you can try Wranglr. Two of them require installing R to your computer. The current version of Wranlgr is built with R version 3.5.3.
 
-Even though Wranglr is a web app, you can run it locally from your machine if you install all the required packages. Wranglr is a packrat project. [Packrat](https://rstudio.github.io/packrat/) is a package management tool for R, that allows you to create a local library for R packages for this project only. It also allows you to install the same package versions that were used to construct Wranglr. So, to try Wranlgr out locally, you can follow these steps:
+#### The online trial version
+
+Wranglr is currently hosted at https://antonvsdata.shinyapps.io/wranglr/. You can try the app there. Please read the instructions that can be downloaded from the Instructions tab.
+
+Note that the free instance of shinyapps.io only allows for 25 hours of use per month, so this instance of Wranglr might be unavailable. If this is the case, you must check out the other options.
+
+#### Running Wranglr locally with shiny::runGitHub
+
+Shiny apps have a really useful feature: you can run apps that are stored in GitHub! To do this, simply open an R session and follow these steps:
+
+1. Make sure you have Shiny installed. If not, run ```install.packages("shiny")```
+2. Install all the other packages required by Wranlgr. The below code will install all the missing packages:  
+```
+pckgs <- c("dplyr", "tidyr", "shiny", "openxlsx", "stringr")
+  for (pckg in pckgs){
+    if(!requireNamespace(pckg, quietly = TRUE)) {
+      install.packages(pckg)
+    }
+  }
+```
+3. You should now have everything you need for Wranglr. Start the app by running: ```shiny::runGitHub("wranglr", "antonvsdata")```
+4. See the instructions on the Instructions tab. You can use example data found there as well.
+
+Note that you might get weird error messages if your versions of the packages do not match those used while developing Wranglr. To make sure you have the correct package versions, see the next option:
+
+#### Cloning the repository and installing packages with packrat
+
+This is the most reliable method for trying out Wranglr. Wranglr is a packrat project. [Packrat](https://rstudio.github.io/packrat/) is a package management tool for R, that allows you to create a local library for R packages for this project only. It also allows you to install the same package versions that were used to construct Wranglr. So, to try Wranlgr out locally, you can follow these steps:
 
 1. Download the git repository by running the following line in your terminal:  
 ```git clone https://github.com/antonvsdata/wranglr```
