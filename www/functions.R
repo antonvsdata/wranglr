@@ -469,7 +469,7 @@ separate_worklists <- function(dframe, modes, msms_qc, msms_sample_ids){
 #' tmp[18,1] <- "#NAME?"
 #'
 #' summarize_data(tmp)
-summarize_data <- function(data, row.checks=c("duplicated_row")
+summarize_data <- function(data, row.checks=c("duplicated_row"),
                            col.checks=c("na", "infinite", "nan", "empty_string", "whitespace",
                                         "leading_or_trailing_whitespace", "byte_sequence_character",
                                         "unicode_replacement_character", "linebreak", "excel_formula_error",
