@@ -346,7 +346,7 @@ modify_sample <- function(dframe, project_title, project_code, save_code, folder
     dummyframe <- matrix(NA, qc_begins[[i]], ncol(dframe_tmp)) %>% data.frame()
     colnames(dummyframe) <- colnames(dframe_tmp)
     dframe_tmp <- rbind(dummyframe, dframe_tmp)
-    dframe_tmp$RUN_ORDER <- seq_len(nrow(dframe_tmp))
+    dframe_tmp$INJECTION_ORDER <- seq_len(nrow(dframe_tmp))
     dframe_tmp$QC <- QC_tmp
     
     # Generate internal ID and sample position for QC samples
@@ -372,7 +372,7 @@ modify_sample <- function(dframe, project_title, project_code, save_code, folder
   dframe_big$DATAFILE <- datafile_labels$short
   dframe_big$DATAFILE_LONG <- datafile_labels$long
   
-  dframe_big <- dframe_big %>% dplyr::select(DATAFILE, RUN_ORDER, INTERNAL_SAMPLE_ID, SAMPLE_ID, QC, everything())
+  dframe_big <- dframe_big %>% dplyr::select(DATAFILE, INJECTION_ORDER, INTERNAL_SAMPLE_ID, SAMPLE_ID, QC, everything())
   
   # Separate dframe_big into modified sample information and worklist tables
   dframe_samples <- dframe_big %>% dplyr::select(-DATAFILE_LONG, -SAMPLE_POSITION)
