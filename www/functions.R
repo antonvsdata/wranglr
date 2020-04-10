@@ -23,14 +23,13 @@ warnings_sample <- function(dframe){
   }
   # R replaces parentheses, brackets and spaces with a dot "."
   # Duplicated column names receive indexing at the end, for example Time and Time.1
-  if (grepl(".",vars, fixed = TRUE) %>% sum() > 0){
+  if (any(grepl("[.]",vars))){
     msg <- paste(msg,"- Make sure you have no special characters like (), [] or spaces in column names. This warning might also be due to duplicated column names.", sep = "<br/>")
   }
-  # R places X in front of column names that start with a number or a special character
-  suspicious <- dframe %>% colnames() %>% grep("^X",.) %>% sum()
-  explained <- dframe %>% colnames() %>% grep("^X[[:alpha:]]",.) %>% sum() # These are just words that start with X
-  if (suspicious > explained){
-    msg <- paste(msg,"- Check if a column name starts with a number (or X[number])!", sep = "<br/>")
+  # Column names should not start with a number (can cause weird stuff in R)
+  
+  if (any(grepl("^[0-9]", vars))){
+    msg <- paste(msg,"- Column names should not start with a number (can cause weird stuff in R)!", sep = "<br/>")
   }
   if (msg != ""){
     msg <- paste("Warnings:",msg,sep="")
