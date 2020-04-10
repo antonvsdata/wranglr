@@ -1,6 +1,6 @@
 shinyUI(
   
-navbarPage("Wranglr",
+navbarPage("Wranglr 1.0.0",
   
   tabPanel("Sample information file",
            includeCSS("www/style.css"),
