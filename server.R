@@ -322,20 +322,20 @@ shinyServer(function(input, output){
   # dataTableOutput of either modified sample information file or the worklist file
   output$sample_mod_table <- renderUI({
     if(input$table_choice == "samples"){
-      tableOutput("sample_mod")
+      DT::dataTableOutput("sample_mod")
     }
     else{
-      tableOutput("sample_mod_worklist")
+      DT::dataTableOutput("sample_mod_worklist")
     }
   })
   
   # First worklist file
-  output$sample_mod_worklist <- renderTable({
+  output$sample_mod_worklist <- DT::renderDataTable({
     separated_worklist()[[1]]
   })
   
   # Modified sample informaiton ifle
-  output$sample_mod <- renderTable({
+  output$sample_mod <- DT::renderDataTable({
     sample_modified()$samples
   })
   
