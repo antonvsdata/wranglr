@@ -9,7 +9,7 @@ library(shiny)
 # Set the maximum size of uploaded files to 30MB
 options(shiny.maxRequestSize=30*1024^2)
 
-shinyServer(function(input,output){
+shinyServer(function(input, output){
   
   # Check that the input sample list file can be read correctly
   output$format_check <- renderUI({
@@ -17,7 +17,7 @@ shinyServer(function(input,output){
       return(NULL)
     }
     datafile <- try(read.xlsx(input$sample_input$datapath, sheet = 1))
-    if(class(datafile)=="try-error"){
+    if(class(datafile) == "try-error"){
       return(HTML('<p style = "color: red;"> The file should be in .xlsx format </p>'))
     }
     else{
@@ -54,7 +54,7 @@ shinyServer(function(input,output){
     if(sample_warnings() == ""){
       return(p("Sample information sheet OK"))
     }
-    paste("<p style=\"color: red;\">",sample_warnings(),"</p>",sep="") %>% HTML()
+    paste0("<p style=\"color: red;\">", sample_warnings(), "</p>") %>% HTML()
   })
   
   # Count the number of groups and/or timepoints in the sample info sheet
@@ -79,7 +79,7 @@ shinyServer(function(input,output){
     smry <- capture.output(summarize_data(sample_dframe()))
     out_text <- ""
     for (i in 1:length(smry)){
-      out_text <- paste(out_text,smry[i],sep = "<br/>")
+      out_text <- paste(out_text,smry[i], sep = "<br/>")
     }
     out_text %>% HTML()
   })
@@ -94,7 +94,7 @@ shinyServer(function(input,output){
   })
   
   output$project_code <- renderUI({
-    textInput("project_code","Project code", value = default_project_code())
+    textInput("project_code", "Project code", value = default_project_code())
   })
   
   # Project home folder input
@@ -102,10 +102,10 @@ shinyServer(function(input,output){
   output$destination <- renderUI({
     if(input$project_title != ""){
       textInput("folder","Project home folder",
-                value= paste("D:\\MassHunter\\Data\\",input$project_title,"\\",sep=""))
+                value= paste0("D:\\MassHunter\\Data\\", input$project_title, "\\"))
     }
     else{
-      textInput("folder","Project home folder",
+      textInput("folder", "Project home folder",
                 value= "D:\\MassHunter\\Data\\")
     }
   })
@@ -114,13 +114,13 @@ shinyServer(function(input,output){
     tagList(
       checkboxInput("include_subject_id", "Run samples from same subject sequently"),
       conditionalPanel(condition = "input.include_subject_id",
-                       selectInput("subject_id_column","Subject ID column",
+                       selectInput("subject_id_column", "Subject ID column",
                                    choices = colnames(sample_dframe())))
     )
   })
   
   output$grouping_column_choice <- renderUI({
-    selectInput("grouping_column","Column containing groups for randomization",
+    selectInput("grouping_column", "Column containing groups for randomization",
                 choices = colnames(sample_dframe()))
   })
   
@@ -137,19 +137,19 @@ shinyServer(function(input,output){
       fluidRow(
         conditionalPanel(condition = "input.modes.includes('HILIC_neg')",
                          column(3,
-                                textInput("qc_poschar_hilicneg","HILIC neg",
+                                textInput("qc_poschar_hilicneg", "HILIC neg",
                                           value = qc_defs["HILIC_neg"]))),
         conditionalPanel(condition = "input.modes.includes('HILIC_pos')",
                          column(3,
-                                textInput("qc_poschar_hilicpos","HILIC pos",
+                                textInput("qc_poschar_hilicpos", "HILIC pos",
                                           value = qc_defs["HILIC_pos"]))),
         conditionalPanel(condition = "input.modes.includes('RP_neg')",
                          column(3,
-                                textInput("qc_poschar_rpneg","RP neg",
+                                textInput("qc_poschar_rpneg", "RP neg",
                                           value = qc_defs["RP_neg"]))),
         conditionalPanel(condition = "input.modes.includes('RP_pos')",
                          column(3,
-                                textInput("qc_poschar_rppos","RP pos",
+                                textInput("qc_poschar_rppos", "RP pos",
                                           value = qc_defs["RP_pos"])))
       )
     )
@@ -158,7 +158,7 @@ shinyServer(function(input,output){
   # Choice of samples for AutoMSMS
   # values from original SAMPLE_ID column
   output$msms_samples <- renderUI({
-    selectizeInput("msms_samples_choice","Choose samples for AutoMSMS",
+    selectizeInput("msms_samples_choice", "Choose samples for AutoMSMS",
                    choices = sample_dframe()$SAMPLE_ID, multiple = TRUE)
   })
   
@@ -206,10 +206,11 @@ shinyServer(function(input,output){
   #       - samples: a modified sample information file
   #       - worklist: a data frame containing the worklists for all the modes
   sample_modified <- eventReactive(input$modify_sample,{
-    if(is.null(sample_dframe()) | input$project_title == "" | input$project_code == "" | !grepl('^[A-Za-z0-9_.-]+$', input$project_title)){
+    if(is.null(sample_dframe()) || input$project_title == "" || input$project_code == "" ||
+       !grepl('^[A-Za-z0-9_.-]+$', input$project_title)){
       return(NULL)
     }
-    if (!is.null(sample_warnings()) & sample_warnings() != ""){
+    if (!is.null(sample_warnings()) && sample_warnings() != ""){
       return(NULL)
     }
     modify_sample(sample_dframe(), input$project_title, input$project_code, input$save_code, input$folder,
@@ -240,25 +241,25 @@ shinyServer(function(input,output){
   # Create download buttons
   sample_modified_info <-eventReactive(input$modify_sample,{
     if(is.null(sample_dframe())){
-      return(p("Please input a sample information file",style = "color:red;"))
+      return(p("Please input a sample information file", style = "color:red;"))
     }
-    if ((!is.null(sample_warnings()) & sample_warnings() != "")){
+    if ((!is.null(sample_warnings()) && sample_warnings() != "")){
       return(p("The sample information sheet is not valid!",style = "color:red;"))
     }
     if (input$project_title == ""){
-      return(p("Please input a project title",style = "color:red;"))
+      return(p("Please input a project title", style = "color:red;"))
     }
     if (input$project_code == ""){
-      return(p("Please input a project code",style = "color:red;"))
+      return(p("Please input a project code", style = "color:red;"))
     }
     if(!grepl('^[A-Za-z0-9_.-]+$', input$project_title)){
-      return(p("Only alphanumeric characters allowed in project title (no umlauts)",style = "color:red;"))
+      return(p("Only alphanumeric characters allowed in project title (no umlauts)", style = "color:red;"))
     }
     return(tagList(
       uiOutput("randomize_columns_warnings"),
       h4("Preview:"),
       radioButtons("table_choice", NULL,
-                   choices = c("Processed sample information file" = "samples","Worklist file" = "worklist")),
+                   choices = c("Processed sample information file" = "samples", "Worklist file" = "worklist")),
       uiOutput("sample_mod_table"),
       fluidRow(
         column(4,
@@ -287,11 +288,12 @@ shinyServer(function(input,output){
     if(sample_warnings() == ""){
       return(p("Sample information sheet OK"))
     }
-    paste("<p style=\"color: red;\">",sample_warnings(),"</p>",sep="") %>% HTML()
+    paste0("<p style=\"color: red;\">", sample_warnings(),"</p>") %>% HTML()
   })
   
   randomize_column_warning_msg <- eventReactive(input$modify_sample, {
-    if (is.null(sample_dframe()) | (input$sample_order %in% c("original", "random_global") & !input$include_subject_id)){
+    if (is.null(sample_dframe()) || (input$sample_order %in% c("original", "random_global") &&
+                                     !input$include_subject_id)){
       return(NULL)
     }
     msg <- ""
@@ -314,7 +316,7 @@ shinyServer(function(input,output){
   # Check whether the grouping and/or subject ID columns contain NAs
   output$randomize_columns_warnings <-renderUI({
     msg <- randomize_column_warning_msg()
-    paste("<p style=\"color: red;\">",msg,"</p>",sep="") %>% HTML()
+    paste0("<p style=\"color: red;\">", msg, "</p>") %>% HTML()
   })
   
   # dataTableOutput of either modified sample information file or the worklist file
@@ -339,10 +341,10 @@ shinyServer(function(input,output){
   
   # Download button for modified sample information file file
   output$sample_mod_down_button <- downloadHandler(
-    filename = paste(input$project_title,"sample_info_processed.csv",sep = "_"),
+    filename = paste(input$project_title, "sample_info_processed.csv", sep = "_"),
     
     content = function(file) {
-      write.csv(sample_modified()$samples,file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
+      write.csv(sample_modified()$samples, file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
     }
   )
   
@@ -352,51 +354,51 @@ shinyServer(function(input,output){
       fluidRow(
         conditionalPanel(condition = "input.modes.includes('HILIC_neg')",
                          column(4,
-                                downloadButton("worklist_hilic_neg_download","HILIC neg file"))),
+                                downloadButton("worklist_hilic_neg_download", "HILIC neg file"))),
         conditionalPanel(condition = "input.modes.includes('HILIC_pos')",
                          column(4,offset = 1,
-                                downloadButton("worklist_hilic_pos_download","HILIC pos file")))),
+                                downloadButton("worklist_hilic_pos_download", "HILIC pos file")))),
       br(),
       fluidRow(
         conditionalPanel(condition = "input.modes.includes('RP_neg')",
                          column(4,
-                                downloadButton("worklist_rp_neg_download","RP neg file"))),
+                                downloadButton("worklist_rp_neg_download", "RP neg file"))),
         conditionalPanel(condition = "input.modes.includes('RP_pos')",
                          column(4,offset = 1,
-                                downloadButton("worklist_rp_pos_download","RP pos file")))
+                                downloadButton("worklist_rp_pos_download", "RP pos file")))
       )
     )
   })
   
   output$worklist_hilic_neg_download <- downloadHandler(
-    filename = paste(input$project_title,"worklist_hilic_neg.csv",sep = "_"),
+    filename = paste(input$project_title, "worklist_hilic_neg.csv", sep = "_"),
     
     content = function(file) {
-      write.csv(separated_worklist()$HILIC_neg,file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
+      write.csv(separated_worklist()$HILIC_neg, file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
     }
   )
   
   output$worklist_hilic_pos_download <- downloadHandler(
-    filename = paste(input$project_title,"worklist_hilic_pos.csv",sep = "_"),
+    filename = paste(input$project_title,"worklist_hilic_pos.csv", sep = "_"),
     
     content = function(file) {
-      write.csv(separated_worklist()$HILIC_pos,file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
+      write.csv(separated_worklist()$HILIC_pos, file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
     }
   )
   
   output$worklist_rp_neg_download <- downloadHandler(
-    filename = paste(input$project_title,"worklist_rp_neg.csv",sep = "_"),
+    filename = paste(input$project_title,"worklist_rp_neg.csv", sep = "_"),
     
     content = function(file) {
-      write.csv(separated_worklist()$RP_neg,file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
+      write.csv(separated_worklist()$RP_neg, file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
     }
   )
   
   output$worklist_rp_pos_download <- downloadHandler(
-    filename = paste(input$project_title,"worklist_rp_pos.csv",sep = "_"),
+    filename = paste(input$project_title,"worklist_rp_pos.csv", sep = "_"),
     
     content = function(file) {
-      write.csv(separated_worklist()$RP_pos,file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
+      write.csv(separated_worklist()$RP_pos, file, na = "", row.names = FALSE, quote = F, eol = "\r\n")
     }
   )
   
@@ -407,7 +409,7 @@ shinyServer(function(input,output){
     filename = "Wranglr_instructions.pdf",
     
     content = function(file){
-      file.copy("www/Wranglr_instructions.pdf",file)
+      file.copy("www/Wranglr_instructions.pdf", file)
     }
   )
   
@@ -415,7 +417,7 @@ shinyServer(function(input,output){
     filename = "sample_form_specification.pdf",
     
     content = function(file){
-      file.copy("www/sample_form_specification.pdf",file)
+      file.copy("www/sample_form_specification.pdf", file)
     }
   )
   
@@ -423,7 +425,7 @@ shinyServer(function(input,output){
     filename = "sample_info.xlsx",
     
     content = function(file){
-      file.copy("www/sample_info.xlsx",file)
+      file.copy("www/sample_info.xlsx", file)
     }
   )
   
@@ -431,7 +433,7 @@ shinyServer(function(input,output){
     filename = "repeated_measurements.xlsx",
     
     content = function(file){
-      file.copy("www/repeated_measurements.xlsx",file)
+      file.copy("www/repeated_measurements.xlsx", file)
     }
   )
   

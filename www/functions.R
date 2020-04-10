@@ -8,7 +8,8 @@ check_dependencies <- function() {
     }
   }
   if (length(miss)) {
-    stop(paste("The following packages are needed for this app to work:", paste(miss, collapse = ", "), ". Please install them."), .call = FALSE)
+    stop(paste("The following packages are needed for this app to work:", paste(miss, collapse = ", "),
+               ". Please install them."), .call = FALSE)
   }
 }
 
@@ -19,12 +20,13 @@ warnings_sample <- function(dframe){
   vars <- colnames(dframe)
   
   if(vars[1] != "SAMPLE_ID"){
-    msg <- paste(msg,"- First column is not named \"SAMPLE_ID\"", sep = "<br/>")
+    msg <- paste(msg, "- First column is not named \"SAMPLE_ID\"", sep = "<br/>")
   }
   # R replaces parentheses, brackets and spaces with a dot "."
   # Duplicated column names receive indexing at the end, for example Time and Time.1
-  if (any(grepl("[.]",vars))){
-    msg <- paste(msg,"- Make sure you have no special characters like (), [] or spaces in column names. This warning might also be due to duplicated column names.", sep = "<br/>")
+  if (any(grepl("[.]", vars))){
+    msg <- paste(msg,"- Make sure you have no special characters like (), [] or spaces in column names.
+                 This warning might also be due to duplicated column names.", sep = "<br/>")
   }
   # Column names should not start with a number (can cause weird stuff in R)
   
@@ -32,7 +34,7 @@ warnings_sample <- function(dframe){
     msg <- paste(msg,"- Column names should not start with a number (can cause weird stuff in R)!", sep = "<br/>")
   }
   if (msg != ""){
-    msg <- paste("Warnings:",msg,sep="")
+    msg <- paste("Warnings:", msg, sep="")
   }
   return(msg)
 }
@@ -43,11 +45,11 @@ count_group_time <- function(dframe){
   msg <- ""
   if("GROUP" %in% colnames(dframe)){
    groups <- dframe$GROUP %>% base::unique() %>% length()
-   msg <- paste("Number of groups:",as.character(groups))
+   msg <- paste("Number of groups:", as.character(groups))
   }
   if("TIME" %in% colnames(dframe)){
     times <- dframe$TIME %>% base::unique() %>% length()
-    msg <- paste(msg,"Number of time points:",sep = "<br/>") %>% paste(as.numeric(times))
+    msg <- paste(msg,"Number of time points:", sep = "<br/>") %>% paste(as.numeric(times))
   }
   msg
 }
@@ -79,33 +81,37 @@ get_default_project_code <- function(project_title){
 # OUTPUT: list of two types of datafile labels
 #       - short: character vector of datafile labels without complete path and .d file ending
 #       - long: character vector of datafile labels with complete path and .d file ending
-generate_datafile_labels <- function(folder,project_title,modes,qc_begins,n_mod){
+generate_datafile_labels <- function(folder, project_title, modes, qc_begins, n_mod){
   labels <- c()
   longs <- c()
   
   if("HILIC_neg" %in% modes){
-    hilic_neg_labels <- str_pad(as.character(1:(n_mod+qc_begins$hilicneg)),width=4, pad = "0") %>% paste(project_title,"HILIC_neg",.,sep = "_")
-    labels <- c(labels,hilic_neg_labels)
-    hilic_neg_long <- paste(folder,project_title,"_HILIC_neg\\", hilic_neg_labels,".d",sep="")
-    longs <- c(longs,hilic_neg_long)
+    hilic_neg_labels <- str_pad(as.character(seq_len(n_mod + qc_begins$hilicneg)), width=4, pad = "0") %>%
+      paste(project_title, "HILIC_neg", ., sep = "_")
+    labels <- c(labels, hilic_neg_labels)
+    hilic_neg_long <- paste(folder, project_title, "_HILIC_neg\\", hilic_neg_labels, ".d", sep="")
+    longs <- c(longs, hilic_neg_long)
   }
   if("HILIC_pos" %in% modes){
-    hilic_pos_labels <- str_pad(as.character(1:(n_mod+qc_begins$hilicpos)),width=4, pad = "0") %>% paste(project_title,"HILIC_pos",.,sep = "_")
-    labels <- c(labels,hilic_pos_labels)
-    hilic_pos_long <- paste(folder,project_title,"_HILIC_pos\\", hilic_pos_labels,".d",sep="")
-    longs <- c(longs,hilic_pos_long)
+    hilic_pos_labels <- str_pad(as.character(seq_len(n_mod + qc_begins$hilicpos)), width=4, pad = "0") %>%
+      paste(project_title, "HILIC_pos", ., sep = "_")
+    labels <- c(labels, hilic_pos_labels)
+    hilic_pos_long <- paste(folder, project_title, "_HILIC_pos\\", hilic_pos_labels, ".d", sep="")
+    longs <- c(longs, hilic_pos_long)
   }
   if("RP_neg" %in% modes){
-    rp_neg_labels <- str_pad(as.character(1:(n_mod+qc_begins$rpneg)),width=4, pad = "0") %>% paste(project_title,"RP_neg",.,sep = "_")
-    labels <- c(labels,rp_neg_labels)
-    rp_neg_long <- paste(folder,project_title,"_RP_neg\\", rp_neg_labels,".d",sep="")
-    longs <- c(longs,rp_neg_long)
+    rp_neg_labels <- str_pad(as.character(seq_len(n_mod + qc_begins$rpneg)), width=4, pad = "0") %>%
+      paste(project_title, "RP_neg", ., sep = "_")
+    labels <- c(labels, rp_neg_labels)
+    rp_neg_long <- paste(folder, project_title, "_RP_neg\\", rp_neg_labels, ".d", sep="")
+    longs <- c(longs, rp_neg_long)
   }
   if("RP_pos" %in% modes){
-    rp_pos_labels <- str_pad(as.character(1:(n_mod+qc_begins$rppos)),width=4, pad = "0") %>% paste(project_title,"RP_pos",.,sep = "_")
-    labels <- c(labels,rp_pos_labels)
-    rp_pos_long <- paste(folder,project_title,"_RP_pos\\", rp_pos_labels,".d",sep="")
-    longs <- c(longs,rp_pos_long)
+    rp_pos_labels <- str_pad(as.character(seq_len(n_mod + qc_begins$rppos)), width=4, pad = "0") %>%
+      paste(project_title, "RP_pos", ., sep = "_")
+    labels <- c(labels, rp_pos_labels)
+    rp_pos_long <- paste(folder,project_title, "_RP_pos\\", rp_pos_labels, ".d", sep="")
+    longs <- c(longs, rp_pos_long)
   }
   list(short = labels,long = longs)
 }
@@ -126,41 +132,41 @@ get_qc_positions <- function(qc_pos_chars, n_plates, position_type){
   y <- x
   z <- x
   
-  for (i in 1:length(qc_pos_chars)){
+  for (i in seq_len(length(qc_pos_chars))){
     qc_pos_char <- qc_pos_chars[[i]]
-    qc_char <- strsplit(qc_pos_char,split = NULL) %>% unlist()
+    qc_char <- strsplit(qc_pos_char, split = NULL) %>% unlist()
     len <- length(qc_char)
     
-    if(grepl("^Vial ", qc_pos_char) & len == 6 & grepl("[1-6]",qc_char[6])){
+    if(grepl("^Vial ", qc_pos_char) && len == 6 && grepl("[1-6]", qc_char[6])){
       x[i] <- -1
       y[i] <- -1
       z[i] <- -1
       next
     }
     
-    if(!len %in% c(5,6) | qc_char[1] != "P" | !grepl(paste0("[0-", n_plates, "]"),qc_char[2]) | qc_char[3] != "-" |
-       !grepl("[A-H]",qc_char[4]) | !grepl("[0-9]",qc_char[5])){
-      stop(paste("Invalid QC sample position:",qc_pos_char))
+    if(!len %in% c(5,6) || qc_char[1] != "P" || !grepl(paste0("[0-", n_plates, "]"), qc_char[2]) || qc_char[3] != "-" ||
+       !grepl("[A-H]", qc_char[4]) || !grepl("[0-9]", qc_char[5])){
+      stop(paste("Invalid QC sample position:", qc_pos_char))
     }
-    if(len == 6 & position_type == "well"){
-      if(!grepl("[0-2]",qc_char[6]) | as.numeric(paste0(qc_char[5],qc_char[6])) > 12){
-        stop(paste("Invalid QC sample position:",qc_pos_char))
+    if(len == 6 && position_type == "well"){
+      if(!grepl("[0-2]", qc_char[6]) || as.numeric(paste0(qc_char[5], qc_char[6])) > 12){
+        stop(paste("Invalid QC sample position:", qc_pos_char))
       }
     }
-    if(position_type == "vial" & (len == 6 | !grepl("[A-F]",qc_char[4]))){
-      stop(paste("Invalid QC sample position:",qc_pos_char))
+    if(position_type == "vial" && (len == 6 || !grepl("[A-F]", qc_char[4]))){
+      stop(paste("Invalid QC sample position:", qc_pos_char))
     }
     if(len == 5){
       x[i] <- as.numeric(qc_char[5])
     }
     else{
-      x[i] <- as.numeric(paste0(qc_char[5],qc_char[6]))
+      x[i] <- as.numeric(paste0(qc_char[5], qc_char[6]))
     }
     y[i] <- as.numeric(charToRaw(qc_char[4])) - 64
     z[i] <- as.numeric(qc_char[2])
   }
   
-  return(data.frame(x,y,z))
+  return(data.frame(x, y, z))
 }
 
 # Generate sample positions for all the samples after initial QCs
@@ -194,12 +200,12 @@ generate_sample_positions <- function(n, n_plates, position_type, qc_pos_char, a
     x <- x + 1
   }
   
-  for(i in 1:n){
+  for(i in seq_len(n)){
     if (i %% (qc_int+1) == 0){
       positions[i] <- qc_pos_char
     }
     else{
-      positions[i] <- paste("P",as.character(z),"-",LETTERS[y],as.character(x),sep="")
+      positions[i] <- paste("P", as.character(z), "-", LETTERS[y], as.character(x), sep="")
       x <- x + 1
       while(any(x == qc$x & y == qc$y & z == qc$z)){ # skip the positions reserved for QC samples
         x <- x + 1
@@ -224,10 +230,12 @@ save_project_code <- function(project_title, project_code, save_code){
   saved_codes <- read.csv("www/project_codes.csv")
   
   newrow <- data.frame(Project = project_title, Code = project_code)
-  if(save_code & !project_title %in% saved_codes$Project){ # Use existing code
-    write.table(newrow,"www/project_codes.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
+  if(save_code && !project_title %in% saved_codes$Project){ # Use existing code
+    write.table(newrow,"www/project_codes.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F,
+                eol = "\r\n")
   }
-  write.table(newrow,"www/project_log.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F , eol = "\r\n")
+  write.table(newrow,"www/project_log.csv", append = T, row.names = F, col.names = F, sep = ",", quote = F,
+              eol = "\r\n")
 }
 
 # Randomize the samples, add QC and generate internal ID
@@ -254,7 +262,7 @@ modify_sample <- function(dframe, project_title, project_code, save_code, folder
   
   # set factor columns to character
   classes <- lapply(dframe, class) %>% unlist() %>% unname()
-  for (i in 1:length(classes)){
+  for (i in seq_len(length(classes))){
     if(classes[i] == "factor"){
       dframe[,i] <- as.character(dframe[,i])
     }
@@ -267,28 +275,28 @@ modify_sample <- function(dframe, project_title, project_code, save_code, folder
   if(sample_order == "random_global"){
     # If subject id is included, randomize the subject IDs and run all the sampels of one subject in a sequence
     if(include_subject_id){
-      subject_order <- sample(unique(dframe[,subject_id_column]))
-      dframe[subject_id_column] <- factor(dframe[,subject_id_column], levels = subject_order)
+      subject_order <- sample(unique(dframe[, subject_id_column]))
+      dframe[subject_id_column] <- factor(dframe[, subject_id_column], levels = subject_order)
       dframe_ord <- dframe %>%
         group_by_(subject_id_column) %>%
         sample_frac(1) %>%
         ungroup() %>%
         as.data.frame()
-      dframe_ord[subject_id_column] <- as.character(dframe_ord[,subject_id_column])
+      dframe_ord[subject_id_column] <- as.character(dframe_ord[, subject_id_column])
     } else { # Completely randomize the data frame
-      dframe_ord <- dframe[sample(n),]
+      dframe_ord <- dframe[sample(n), ]
     }
   } else if(sample_order == "random_group") {
     # Randomize subjects inside every group, run all the sample of one sunject in a sequence
     if(include_subject_id){
-      subject_order <- sample(unique(dframe[,subject_id_column]))
-      dframe[subject_id_column] <- factor(dframe[,subject_id_column], levels = subject_order)
+      subject_order <- sample(unique(dframe[, subject_id_column]))
+      dframe[subject_id_column] <- factor(dframe[, subject_id_column], levels = subject_order)
       dframe_ord <- dframe %>%
         group_by_(grouping_column, subject_id_column) %>%
         sample_frac(1) %>%
         ungroup() %>%
         as.data.frame()
-      dframe_ord[subject_id_column] <- as.character(dframe_ord[,subject_id_column])
+      dframe_ord[subject_id_column] <- as.character(dframe_ord[, subject_id_column])
     } else { # Randomize completely inside one group
       dframe_ord <- dframe %>%
         group_by_(grouping_column) %>%
@@ -305,47 +313,48 @@ modify_sample <- function(dframe, project_title, project_code, save_code, folder
   # 
   if (!is.na(qc_int)){
     n_mod <- n + floor(n/(qc_int))
-    dframe_mod <- matrix(NA,n_mod,ncol(dframe_ord)) %>% data.frame()
+    dframe_mod <- matrix(NA, n_mod,ncol(dframe_ord)) %>% data.frame()
     colnames(dframe_mod) <- colnames(dframe_ord)
     j <- 0
-    QC <- rep(NA,n_mod)
+    QC <- rep(NA, n_mod)
     
     # Add QC rows in the middle and create QC column
     for (i in 1:n_mod){
-      if (i %% (qc_int+1) == 0){
-        dframe_mod[i,] <- rep(NA,times = ncol(dframe_ord))
+      if (i %% (qc_int + 1) == 0){
+        dframe_mod[i, ] <- rep(NA, times = ncol(dframe_ord))
         QC[i] <- TRUE
         j <- j + 1
       }
       else{
-        dframe_mod[i,] <- dframe_ord[i-j,]
+        dframe_mod[i, ] <- dframe_ord[i-j, ]
         QC[i] <- FALSE
       }
     }
   } else {
     dframe_mod <- dframe_ord
     n_mod <- n
-    QC <- rep(FALSE,n)
+    QC <- rep(FALSE, n)
   }
   
   # Generate sample positions
   # Add QC rows to beginning and combine
-  for(i in 1:length(modes)){
+  for(i in seq_len(length(modes))){
     dframe_tmp <- dframe_mod
-    dframe_tmp$SAMPLE_POSITION <- generate_sample_positions(nrow(dframe_tmp), n_plates, position_type, qc_pos_chars[[i]], qc_pos_chars, qc_int)
-    QC_tmp <- c(rep(TRUE,qc_begins[[i]]),QC)
-    dummyframe <- matrix(NA,qc_begins[[i]],ncol(dframe_tmp)) %>% data.frame()
+    dframe_tmp$SAMPLE_POSITION <- generate_sample_positions(nrow(dframe_tmp), n_plates, position_type,
+                                                            qc_pos_chars[[i]], qc_pos_chars, qc_int)
+    QC_tmp <- c(rep(TRUE, qc_begins[[i]]), QC)
+    dummyframe <- matrix(NA, qc_begins[[i]], ncol(dframe_tmp)) %>% data.frame()
     colnames(dummyframe) <- colnames(dframe_tmp)
     dframe_tmp <- rbind(dummyframe, dframe_tmp)
-    dframe_tmp$RUN_ORDER <- 1:nrow(dframe_tmp)
+    dframe_tmp$RUN_ORDER <- seq_len(nrow(dframe_tmp))
     dframe_tmp$QC <- QC_tmp
     
     # Generate internal ID and sample position for QC samples
     j <- 0
-    for(k in 1:(nrow(dframe_tmp))){
+    for(k in seq_len(nrow(dframe_tmp))){
       if (dframe_tmp$QC[k]){
         j <- j + 1
-        dframe_tmp$INTERNAL_SAMPLE_ID[k] <- paste("QC",as.character(j),sep="_")
+        dframe_tmp$INTERNAL_SAMPLE_ID[k] <- paste("QC", j, sep="_")
         dframe_tmp$SAMPLE_POSITION[k] <- qc_pos_chars[[i]]
       }
     }
@@ -359,15 +368,15 @@ modify_sample <- function(dframe, project_title, project_code, save_code, folder
   }
   
   # Generate datafile labels
-  datafile_labels <- generate_datafile_labels(folder,project_title,modes,qc_begins,n_mod)
+  datafile_labels <- generate_datafile_labels(folder, project_title, modes, qc_begins, n_mod)
   dframe_big$DATAFILE <- datafile_labels$short
-  dframe_big$DATAFILE_LONG <-datafile_labels$long
+  dframe_big$DATAFILE_LONG <- datafile_labels$long
   
-  dframe_big <- dframe_big %>% dplyr::select(DATAFILE,RUN_ORDER,INTERNAL_SAMPLE_ID,SAMPLE_ID,QC,everything())
+  dframe_big <- dframe_big %>% dplyr::select(DATAFILE, RUN_ORDER, INTERNAL_SAMPLE_ID, SAMPLE_ID, QC, everything())
   
   # Separate dframe_big into modified sample information and worklist tables
-  dframe_samples <- dframe_big %>% dplyr::select(-DATAFILE_LONG,-SAMPLE_POSITION)
-  dframe_worklist <- dframe_big %>% dplyr::select(INTERNAL_SAMPLE_ID,SAMPLE_POSITION,DATAFILE_LONG)
+  dframe_samples <- dframe_big %>% dplyr::select(-DATAFILE_LONG, -SAMPLE_POSITION)
+  dframe_worklist <- dframe_big %>% dplyr::select(INTERNAL_SAMPLE_ID, SAMPLE_POSITION, DATAFILE_LONG)
 
   return(list(samples = dframe_samples, worklist = dframe_worklist))
 }
@@ -382,44 +391,45 @@ modify_sample <- function(dframe, project_title, project_code, save_code, folder
 #       data frame with AutoMSM added
 add_auto_msms <- function(dframe, mode, msms_qc, msms_sample_ids){
   
-  dframe$METHOD <- paste0(mode,".m")
+  dframe$METHOD <- paste0(mode, ".m")
   
-  if(is.null(msms_qc) & is.null(msms_sample_ids)){
+  if(is.null(msms_qc) && is.null(msms_sample_ids)){
     return(dframe)
   }
   
   # Get the datafile path and number of the last datafile
-  last_split <- dframe[nrow(dframe),]$DATAFILE_LONG %>% as.character() %>% strsplit("") %>% unlist()
+  last_split <- dframe[nrow(dframe), ]$DATAFILE_LONG %>% as.character() %>% strsplit("") %>% unlist()
   l <- length(last_split)
-  df_number <- last_split[(l-5):(l-2)] %>% paste0(collapse="") %>% as.numeric()
-  df_path <- last_split[-((l-5):l)] %>% paste0(collapse="")
+  df_number <- last_split[seq(l-5, l-2)] %>% paste0(collapse = "") %>% as.numeric()
+  df_path <- last_split[-seq(l-5, l)] %>% paste0(collapse = "")
   
   if(msms_qc){
     msms_sample_ids <- c(msms_sample_ids,"QC_1")
   }
   
   n_msms_samples <- length(msms_sample_ids)
-  dframe_bottom <- matrix(NA,3*n_msms_samples+1,ncol(dframe)) %>% data.frame()
+  dframe_bottom <- matrix(NA, 3 * n_msms_samples + 1, ncol(dframe)) %>% data.frame()
   colnames(dframe_bottom) <- colnames(dframe)
   
-  msms_voltages <- c("10V","20V","40V")
-  for (i in 1:n_msms_samples){
-    position <- dframe[dframe$INTERNAL_SAMPLE_ID %in% msms_sample_ids[i],]$SAMPLE_POSITION %>% as.character()
+  msms_voltages <- c("10V", "20V", "40V")
+  for (i in seq_len(n_msms_samples)){
+    position <- dframe[dframe$INTERNAL_SAMPLE_ID %in% msms_sample_ids[i], ]$SAMPLE_POSITION %>% as.character()
     
     for (j in 1:3){
-      row <- (i-1)*3 +j
+      row <- (i - 1) * 3 + j
       df_number <- df_number + 1
-      dframe_bottom[row,]$INTERNAL_SAMPLE_ID <- paste(msms_sample_ids[i],"auto_msms",msms_voltages[j],sep="_")
-      dframe_bottom[row,]$SAMPLE_POSITION <- position
-      dframe_bottom[row,]$DATAFILE_LONG <- paste(df_path,str_pad(df_number, width = 4, pad = "0"),".d",sep="")
-      dframe_bottom[row,]$METHOD <- paste0(mode,"_AutoMSMS_",msms_voltages[j],".m")
+      dframe_bottom[row, ]$INTERNAL_SAMPLE_ID <- paste(msms_sample_ids[i],"auto_msms",msms_voltages[j],sep="_")
+      dframe_bottom[row, ]$SAMPLE_POSITION <- position
+      dframe_bottom[row, ]$DATAFILE_LONG <- paste(df_path, str_pad(df_number, width = 4, pad = "0"), ".d", sep="")
+      dframe_bottom[row, ]$METHOD <- paste0(mode,"_AutoMSMS_", msms_voltages[j], ".m")
     }
   }
   
-  dframe_bottom[nrow(dframe_bottom),]$INTERNAL_SAMPLE_ID <- "STOP"
-  dframe_bottom[nrow(dframe_bottom),]$SAMPLE_POSITION <- "Vial 1"
-  dframe_bottom[nrow(dframe_bottom),]$DATAFILE_LONG <- paste(df_path,str_pad(df_number + 1, width = 4, pad = "0"),".d",sep="")
-  dframe_bottom[nrow(dframe_bottom),]$METHOD <- "STOP.m"
+  dframe_bottom[nrow(dframe_bottom), ]$INTERNAL_SAMPLE_ID <- "STOP"
+  dframe_bottom[nrow(dframe_bottom), ]$SAMPLE_POSITION <- "Vial 1"
+  dframe_bottom[nrow(dframe_bottom), ]$DATAFILE_LONG <- paste(df_path, str_pad(df_number + 1, width = 4, pad = "0"),
+                                                              ".d", sep = "")
+  dframe_bottom[nrow(dframe_bottom), ]$METHOD <- "STOP.m"
   
   dframe <- rbind(dframe, dframe_bottom) %>% select(INTERNAL_SAMPLE_ID, SAMPLE_POSITION, METHOD, DATAFILE_LONG)
   dframe
@@ -434,13 +444,13 @@ add_auto_msms <- function(dframe, mode, msms_qc, msms_sample_ids){
 # OUTPUT:
 #       named list of worklist tables, names = modes
 separate_worklists <- function(dframe, modes, msms_qc, msms_sample_ids){
-  separated <- as.list(rep(NA,4))
-  modeopts <- c("HILIC_neg","HILIC_pos","RP_neg","RP_pos")
+  separated <- as.list(rep(NA, 4))
+  modeopts <- c("HILIC_neg", "HILIC_pos", "RP_neg", "RP_pos")
   for(i in 1:4){
     if(modeopts[i] %in% modes){
-      dframe_tmp <- dframe %>% dplyr::filter(grepl(modeopts[i],DATAFILE_LONG))
+      dframe_tmp <- dframe %>% dplyr::filter(grepl(modeopts[i], DATAFILE_LONG))
       dframe_tmp <- add_auto_msms(dframe_tmp, modeopts[i], msms_qc, msms_sample_ids)
-      colnames(dframe_tmp) <- c("Sample Name","Sample Position","Method", "Data File")
+      colnames(dframe_tmp) <- c("Sample Name", "Sample Position", "Method", "Data File")
       separated[[i]] <- dframe_tmp
       names(separated)[i] <- modeopts[i]
     }
@@ -475,7 +485,6 @@ separate_worklists <- function(dframe, modes, msms_qc, msms_sample_ids){
 #' tmp[18,1] <- "#NAME?"
 #'
 #' summarize_data(tmp)
-
 summarize_data <- function(data, row.checks=c("duplicated_row"), col.checks=c("na", "infinite", "nan", "empty_string", "whitespace", "leading_or_trailing_whitespace", "byte_sequence_character", "unicode_replacement_character", "linebreak", "excel_formula_error", "comma_as_decimal_separator", "duplicated_column"), parallel=FALSE) {
   
   # Toggle for logging/availability of futile.logger package
