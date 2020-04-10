@@ -1,19 +1,3 @@
-check_dependencies <- function() {
-
-  pckgs <- c("dplyr", "tidyr", "shiny", "openxlsx", "stringr")
-  miss <- c()
-  for (pckg in pckgs){
-    if(!requireNamespace(pckg, quietly = TRUE)) {
-      miss <- c(miss, pckg)
-    }
-  }
-  if (length(miss)) {
-    stop(paste("The following packages are needed for this app to work:", paste(miss, collapse = ", "),
-               ". Please install them."), .call = FALSE)
-  }
-}
-
-
 # Warnings related to the sample information sheet
 warnings_sample <- function(dframe){
   msg <- ""
@@ -485,12 +469,13 @@ separate_worklists <- function(dframe, modes, msms_qc, msms_sample_ids){
 #' tmp[18,1] <- "#NAME?"
 #'
 #' summarize_data(tmp)
-summarize_data <- function(data, row.checks=c("duplicated_row"), col.checks=c("na", "infinite", "nan", "empty_string", "whitespace", "leading_or_trailing_whitespace", "byte_sequence_character", "unicode_replacement_character", "linebreak", "excel_formula_error", "comma_as_decimal_separator", "duplicated_column"), parallel=FALSE) {
+summarize_data <- function(data, row.checks=c("duplicated_row")
+                           col.checks=c("na", "infinite", "nan", "empty_string", "whitespace",
+                                        "leading_or_trailing_whitespace", "byte_sequence_character",
+                                        "unicode_replacement_character", "linebreak", "excel_formula_error",
+                                        "comma_as_decimal_separator", "duplicated_column"),
+                           parallel=FALSE) {
   
-  # Toggle for logging/availability of futile.logger package
-  f_logging <- requireNamespace("futile.logger", quietly = TRUE)
-  
-  if (f_logging) futile.logger::flog.debug("Initializing summary analysis.")
   
   # Select serial or parallel operator for foreach-function
   if (parallel) {
@@ -506,7 +491,6 @@ summarize_data <- function(data, row.checks=c("duplicated_row"), col.checks=c("n
   
   col.checks.result <- foreach::foreach (i=1:length(col.checks), .combine=c, .inorder=FALSE) %do_operator% {
     check <- col.checks[i]
-    if (f_logging) futile.logger::flog.debug(paste0("Column check: ", check))
     
     if (check == "na") {
       result <- list(na=which(colSums(sapply(X=data, FUN=function(x) { is.na(x) })) > 0))
@@ -535,15 +519,13 @@ summarize_data <- function(data, row.checks=c("duplicated_row"), col.checks=c("n
       names(dupli) <- colnames(data)[dupli]
       result <- list(duplicated_columns=dupli)
     }
-    if (f_logging) futile.logger::flog.trace(paste0("- Check result: ", result))
+    
     
     result
   }
   
-  if (f_logging) futile.logger::flog.debug("Starting row checks.")
   row.checks.result <- foreach::foreach (i=1:length(row.checks), .combine=c, .inorder=FALSE) %do_operator% {
     check <- row.checks[i]
-    if (f_logging) futile.logger::flog.debug(paste0("Row check: ", check))
     
     if (check == "duplicated_row") {
       dupli <- which(duplicated(data))
@@ -551,12 +533,14 @@ summarize_data <- function(data, row.checks=c("duplicated_row"), col.checks=c("n
       result <- list(duplicated_row=dupli)
       
     }
-    if (f_logging) futile.logger::flog.trace(paste0("- Check result: ", result))
+    
     
     result
   }
   
-  structure(list(dimensions=dim(data), classes=classes, class_freq=class_freq, col.checks=col.checks.result, row.checks=row.checks.result), class="summarized.data")
+  structure(list(dimensions=dim(data), classes=classes, class_freq=class_freq,
+                 col.checks=col.checks.result, row.checks=row.checks.result),
+            class="summarized.data")
 }
 
 #' Printing summarize_data

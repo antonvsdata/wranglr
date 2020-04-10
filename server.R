@@ -1,5 +1,4 @@
 source("www/functions.R")
-check_dependencies()
 
 library(openxlsx)
 library(dplyr)
