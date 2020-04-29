@@ -3,4 +3,4 @@ packrat/lib*/
 .Rproj.user/
 packrat/src/
 testdata/
-www/project_log.csv
+app/www/project_log.csv
