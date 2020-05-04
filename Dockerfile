@@ -37,5 +37,5 @@ EXPOSE 80
 
 # Copy further configuration files into the Docker image
 COPY docker/shiny-server.sh /usr/bin/shiny-server.sh
-
+RUN chmod +x /usr/bin/shiny-server.sh
 CMD ["/usr/bin/shiny-server.sh"]
